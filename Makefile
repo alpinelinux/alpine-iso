@@ -28,6 +28,7 @@ find_apk	= $(addprefix $(ISO_PKGDIR)/,$(call find_apk_file,$(1)))
 
 # get apk does not support wildcards
 get_apk         = $(addsuffix .apk,$(shell apk fetch --simulate $(APK_OPTS) $(1) 2>&1 | sed 's:^Downloading :$(ISO_PKGDIR)/:'))
+expand_apk	= $(shell apk search --quiet $(APK_OPTS) $(1) | sort | uniq)
 
 KERNEL_FLAVOR	?= grsec
 KERNEL_PKGNAME	?= linux-$(KERNEL_FLAVOR)
@@ -45,7 +46,7 @@ STRACE_APK	:= $(call get_apk,strace)
 APKS_FILTER	?= | grep -v -- '-dev$$' | grep -v 'sources'
 
 APKS		?= '*'
-APK_FILES	:= $(call find_apk,$(APKS))
+APK_FILES	:= $(call get_apk,$(call expand_apk,$(APKS)))
 
 all: isofs
 
@@ -237,6 +238,7 @@ $(ISO_KERNEL): $(MODLOOP_DIRSTAMP)
 	@rm -f $(ISO_DIR)/boot/$(KERNEL_NAME)
 	@ln -s vmlinuz-$(MODLOOP_KERNEL_RELEASE) $@
 	@rm -rf $(ISO_DIR)/.[A-Z]* $(ISO_DIR)/.[a-z]* $(ISO_DIR)/lib
+	@touch $@
 
 $(ISOFS_DIRSTAMP): $(MODLOOP) $(INITFS) $(ISOLINUX_CFG) $(ISOLINUX_BIN) $(ISO_KERNEL) $(ISO_REPOS_DIRSTAMP) $(SYSLINUX_CFG)
 	@echo "$(ALPINE_NAME)-$(ALPINE_RELEASE) $(BUILD_DATE)" \
@@ -270,6 +272,30 @@ $(ISO_SHA1):	$(ISO)
 	@sha1sum $(ISO) > $@ || rm -f $@
 
 #
+# .pkgdiff
+#
+previous	:= $(shell cat previous)
+release_diff	:= $(previous)-$(ALPINE_RELEASE)
+PREV_ISO	:= $(ALPINE_NAME)-$(previous)-$(ALPINE_ARCH).iso
+pkgdiff		:= $(ALPINE_NAME)-$(release_diff).pkgdiff
+$(pkgdiff): cmp-apks-iso previous $(PREV_ISO) $(ISO)
+	@echo "==> Generating $@"
+	@./cmp-apks-iso $(PREV_ISO) $(ISO) > $@
+
+diff: $(pkgdiff)
+
+
+#
+# xdelta
+#
+xdelta	:= $(ALPINE_NAME)-$(release_diff).xdelta
+$(xdelta): $(PREV_ISO) $(ISO)
+	@echo "==> Generating $@"
+	@xdelta3 -f -e -s $(PREV_ISO) $(ISO) $@
+
+xdelta: $(xdelta)
+
+#
 # USB image
 #
 USBIMG 		:= $(ALPINE_NAME)-$(ALPINE_RELEASE)-$(ALPINE_ARCH).img
@@ -296,7 +322,23 @@ $(ALPINE_NAME).img:	$(USBIMG)
 
 img:	$(ALPINE_NAME).img
 
-sha1: $(ISO_SHA1) $(USBIMG_SHA1)
+sha1: $(ISO_SHA1)
 
-release: $(ISO_SHA1)
+profiles := $(wildcard *.conf.mk)
+current := $(shell cat current)
+
+all-release: current previous $(profiles)
+	@echo "*"
+	@echo "* Making $(current) releases"
+	@echo "*"
+	@echo
+	@for i in $(profiles); do\
+		p=$${i%.conf.mk}; \
+		echo "*";\
+		echo "* Release $$p $(current)"; \
+		echo "*"; \
+		rm -rf isotmp.$$p; \
+		fakeroot $(MAKE) ALPINE_RELEASE=$(current) \
+			PROFILE=$$p sha1 diff xdelta || break; \
+	done
 

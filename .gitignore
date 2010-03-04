@@ -1,3 +1,5 @@
 isotmp.*
 *.iso
-
+*.sha1
+*.pkgdiff
+*.xdelta
