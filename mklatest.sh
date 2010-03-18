@@ -8,7 +8,7 @@ releasedir="v${current%.*}/releases"
 target=.latest.txt
 
 do_stat() {
-	stat -c "$releasedir %y %n %s" *-$current-x86.iso
+	stat -c "%y $releasedir/%n %s" *-$current-x86.iso
 }
 
 do_stat || exit 1
