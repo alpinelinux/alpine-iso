@@ -8,4 +8,5 @@ e2fsprogs
 mdadm
 lvm2
 debootstrap
+sfdisk
 
