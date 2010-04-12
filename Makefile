@@ -89,7 +89,7 @@ clean: clean-modloop clean-initfs
 $(APK_FILES):
 	@mkdir -p "$(dir $@)";\
 	p="$(notdir $(basename $@))";\
-	apk fetch $(APK_REPO) -R -v -o "$(dir $@)" $${p%-[0-9]*}
+	apk fetch $(APK_OPTS) -R -v -o "$(dir $@)" $${p%-[0-9]*}
 #	apk fetch $(APK_OPTS) -R -v -o "$(dir $@)" \
 #		`apk search -q $(APK_OPTS) $(APKS) | sort | uniq`
 
