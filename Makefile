@@ -20,7 +20,8 @@ ISO_PKGDIR	:= $(ISO_DIR)/apks
 
 APKS		?= $(shell sed 's/\#.*//; s/\*/\\*/g' $(PROFILE).packages)
 
-APK_OPTS	:= $(addprefix --repository ,$(APK_REPOS)) --keys-dir /etc/apk/keys
+APK_KEYS	?= /etc/apk/keys
+APK_OPTS	:= $(addprefix --repository ,$(APK_REPOS)) --keys-dir $(APK_KEYS)
 
 find_apk_ver	= $(shell apk search $(APK_OPTS) $(1) | sort | uniq)
 find_apk_file	= $(addsuffix .apk,$(call find_apk_ver,$(1)))
@@ -167,7 +168,7 @@ $(INITFS_DIRSTAMP):
 		apk fetch $(APK_OPTS) --stdout $$i \
 			| tar -C $(INITFS_DIR) -zx || exit 1; \
 	done
-	@cp -r /etc/apk/keys $(INITFS_DIR)/etc/apk/ || true
+	@cp -r $(APK_KEYS) $(INITFS_DIR)/etc/apk/ || true
 	@touch $@
 
 #$(INITFS):	$(shell mkinitfs -F "$(INITFS_FEATURES)" -l $(KERNEL))
