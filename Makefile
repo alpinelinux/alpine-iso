@@ -201,7 +201,7 @@ $(ISOLINUX_CFG):
 	@echo "default $(KERNEL_NAME)" >>$(ISOLINUX_CFG)
 	@echo "label $(KERNEL_NAME)" >>$(ISOLINUX_CFG)
 	@echo "	kernel /boot/$(KERNEL_NAME)" >>$(ISOLINUX_CFG)
-	@echo "	append initrd=/boot/$(INITFS_NAME) alpine_dev=cdrom:iso9660 modules=loop,cramfs,sd-mod,usb-storage,floppy quiet" >>$(ISOLINUX_CFG)
+	@echo "	append initrd=/boot/$(INITFS_NAME) alpine_dev=cdrom:iso9660 modules=loop,cramfs,sd-mod,usb-storage,floppy,sr-mod quiet" >>$(ISOLINUX_CFG)
 
 $(SYSLINUX_CFG): $(MODLOOP_DIRSTAMP)
 	@echo "==> iso: configure syslinux"
