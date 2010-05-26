@@ -4,6 +4,7 @@ util-vserver
 openssh
 openntpd
 iptables
+iproute2
 e2fsprogs
 mdadm
 lvm2
