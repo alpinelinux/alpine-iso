@@ -326,7 +326,7 @@ sha1: $(ISO_SHA1)
 
 release: $(ISO_SHA1) $(xdelta) $(pkgdiff)
 
-profiles := $(wildcard *.conf.mk)
+profiles ?= $(alpine alpine-mini alpine-vserver)
 current := $(shell cat current)
 
 all-release: current previous $(profiles)
@@ -335,11 +335,10 @@ all-release: current previous $(profiles)
 	@echo "*"
 	@echo
 	@for i in $(profiles); do\
-		p=$${i%.conf.mk}; \
 		echo "*";\
-		echo "* Release $$p $(current)"; \
+		echo "* Release $$i $(current)"; \
 		echo "*"; \
 		fakeroot $(MAKE) ALPINE_RELEASE=$(current) \
-			PROFILE=$$p release || break; \
+			PROFILE=$$i release || break; \
 	done
 
