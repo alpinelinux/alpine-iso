@@ -342,3 +342,5 @@ all-release: current previous $(profiles)
 			PROFILE=$$i release || break; \
 	done
 
+edge:
+	@fakeroot $(MAKE) PROFILE=alpine-edge sha1
