@@ -20,7 +20,8 @@ ISO_PKGDIR	:= $(ISO_DIR)/apks
 
 APKS		?= $(shell sed 's/\#.*//; s/\*/\\*/g' $(PROFILE).packages)
 
-APK_OPTS	:= $(addprefix --repository ,$(APK_REPOS)) --keys-dir /etc/apk/keys
+APK_KEYS	?= /etc/apk/keys
+APK_OPTS	:= $(addprefix --repository ,$(APK_REPOS)) --keys-dir $(APK_KEYS)
 
 find_apk_ver	= $(shell apk search $(APK_OPTS) $(1) | sort | uniq)
 find_apk_file	= $(addsuffix .apk,$(call find_apk_ver,$(1)))
@@ -30,12 +31,19 @@ find_apk	= $(addprefix $(ISO_PKGDIR)/,$(call find_apk_file,$(1)))
 get_apk         = $(addsuffix .apk,$(shell apk fetch --simulate $(APK_OPTS) $(1) 2>&1 | sed 's:^Downloading :$(ISO_PKGDIR)/:'))
 expand_apk	= $(shell apk search --quiet $(APK_OPTS) $(1) | sort | uniq)
 
-KERNEL_FLAVOR	?= grsec
-KERNEL_PKGNAME	?= linux-$(KERNEL_FLAVOR)
-KERNEL_NAME	:= $(KERNEL_FLAVOR)
-KERNEL_APK	:= $(call get_apk,$(KERNEL_PKGNAME))
+ifeq ($(KERNEL_FLAVOR),)
+	KERNEL_FLAVOR_DEFAULT	?= grsec
+	KERNEL_FLAVOR_XEN	?= pae
+	KERNEL_FLAVOR		?= $(KERNEL_FLAVOR_DEFAULT) $(KERNEL_FLAVOR_XEN)
+else
+	KERNEL_FLAVOR_DEFAULT	?= $(firstword $(KERNEL_FLAVOR))
+	KERNEL_FLAVOR_XEN	?= pae
+endif
 
-KERNEL		:= $(word 3,$(subst -, ,$(notdir $(KERNEL_APK))))-$(word 2,$(subst -, ,$(notdir $(KERNEL_APK))))
+KERNEL_PKGNAME	= linux-$*
+KERNEL_APK	= $(call get_apk,$(KERNEL_PKGNAME))
+
+KERNEL		= $(word 3,$(subst -, ,$(notdir $(KERNEL_APK))))-$(word 2,$(subst -, ,$(notdir $(KERNEL_APK))))
 
 ALPINEBASELAYOUT_APK := $(call find_apk,alpine-baselayout)
 UCLIBC_APK	:= $(call get_apk,uclibc)
@@ -73,30 +81,35 @@ endif
 	@echo "KERNEL:         $(KERNEL)"
 	@echo
 
-clean:
-	rm -rf $(MODLOOP) $(MODLOOP_DIR) $(MODLOOP_DIRSTAMP) \
-		$(INITFS) $(INITFS_DIRSTAMP) $(INITFS_DIR) \
-		$(ISO_DIR) $(ISO_REPOS_DIRSTAMP)
+clean: clean-modloop clean-initfs
+	rm -rf $(ISO_DIR) $(ISO_REPOS_DIRSTAMP) $(ISOFS_DIRSTAMP) \
+		$(ALL_ISO_KERNEL)
 
 
 $(APK_FILES):
 	@mkdir -p "$(dir $@)";\
 	p="$(notdir $(basename $@))";\
-	apk fetch $(APK_REPO) -R -v -o "$(dir $@)" $${p%-[0-9]*}
+	apk fetch $(APK_OPTS) -R -v -o "$(dir $@)" $${p%-[0-9]*}
 #	apk fetch $(APK_OPTS) -R -v -o "$(dir $@)" \
 #		`apk search -q $(APK_OPTS) $(APKS) | sort | uniq`
 
 #
 # Modloop
 #
-MODLOOP		:= $(ISO_DIR)/boot/$(KERNEL_NAME).cmg
-MODLOOP_DIR	:= $(DESTDIR)/modloop
-MODLOOP_KERNELSTAMP := $(DESTDIR)/stamp.modloop.kernel
-MODLOOP_DIRSTAMP := $(DESTDIR)/stamp.modloop
-MODLOOP_EXTRA	?= $(addsuffix -$(KERNEL_FLAVOR), dahdi-linux iscsitarget xtables-addons)
+MODLOOP		:= $(ISO_DIR)/boot/%.cmg
+MODLOOP_DIR	= $(DESTDIR)/modloop.$*
+MODLOOP_KERNELSTAMP := $(DESTDIR)/stamp.modloop.kernel.%
+MODLOOP_DIRSTAMP := $(DESTDIR)/stamp.modloop.%
+MODLOOP_EXTRA	?= $(addsuffix -$*, dahdi-linux iscsitarget xtables-addons)
 MODLOOP_PKGS	= $(KERNEL_PKGNAME) $(MODLOOP_EXTRA)
 
-modloop: $(MODLOOP)
+modloop-%: $(MODLOOP)
+	@:
+
+ALL_MODLOOP = $(foreach flavor,$(KERNEL_FLAVOR),$(subst %,$(flavor),$(MODLOOP)))
+ALL_MODLOOP_DIRSTAMP = $(foreach flavor,$(KERNEL_FLAVOR),$(subst %,$(flavor),$(MODLOOP_DIRSTAMP)))
+
+modloop: $(ALL_MODLOOP)
 
 $(MODLOOP_KERNELSTAMP):
 	@echo "==> modloop: Unpacking kernel modules";
@@ -106,22 +119,24 @@ $(MODLOOP_KERNELSTAMP):
 		apk fetch $(APK_OPTS) --stdout $$i \
 			| tar -C $(MODLOOP_DIR) -xz; \
 	done
-	@cp $(MODLOOP_DIR)/usr/share/kernel/$(KERNEL_FLAVOR)/kernel.release $@
+	@cp $(MODLOOP_DIR)/usr/share/kernel/$*/kernel.release $@
 
-MODLOOP_KERNEL_RELEASE = $(shell cat $(MODLOOP_KERNELSTAMP))
+MODLOOP_KERNEL_RELEASE = $(shell cat $(subst %,$*,$(MODLOOP_KERNELSTAMP)))
 
 $(MODLOOP_DIRSTAMP): $(MODLOOP_KERNELSTAMP)
 	@rm -rf $(addprefix $(MODLOOP_DIR)/lib/modules/*/, source build)
 	@depmod $(MODLOOP_KERNEL_RELEASE) -b $(MODLOOP_DIR)
-	@touch $(MODLOOP_DIRSTAMP)
+	@touch $@
 
 $(MODLOOP): $(MODLOOP_DIRSTAMP)
-	@echo "==> modloop: building image $(notdir $(MODLOOP))"
-	@mkdir -p $(dir $(MODLOOP))
-	@$(MKCRAMFS) $(MODLOOP_DIR)/lib $(MODLOOP)
+	@echo "==> modloop: building image $(notdir $@)"
+	@mkdir -p $(dir $@)
+	@$(MKCRAMFS) $(MODLOOP_DIR)/lib $@
 
-clean-modloop:
-	@rm -rf $(MODLOOP_DIR) $(MODLOOP_DIRSTAMP) $(MODLOOP_PKGSTAMP) $(MODLOOP)
+clean-modloop-%:
+	@rm -rf $(MODLOOP_DIR) $(subst %,$*,$(MODLOOP_DIRSTAMP) $(MODLOOP_KERNELSTAMP) $(MODLOOP))
+
+clean-modloop: $(addprefix clean-modloop-,$(KERNEL_FLAVOR))
 
 #
 # Initramfs rules
@@ -129,16 +144,21 @@ clean-modloop:
 
 # isolinux cannot handle - in filenames
 #INITFS_NAME	:= initramfs-$(MODLOOP_KERNEL_RELEASE)
-INITFS_NAME	:= $(KERNEL_FLAVOR).gz
+INITFS_NAME	:= %.gz
 INITFS		:= $(ISO_DIR)/boot/$(INITFS_NAME)
 
-INITFS_DIR	:= $(DESTDIR)/initfs
-INITFS_TMP	:= $(DESTDIR)/tmp.initfs
-INITFS_DIRSTAMP := $(DESTDIR)/stamp.initfs
+INITFS_DIR	= $(DESTDIR)/initfs.$*
+INITFS_TMP	= $(DESTDIR)/tmp.initfs.$*
+INITFS_DIRSTAMP := $(DESTDIR)/stamp.initfs.%
 INITFS_FEATURES	:= ata base bootchart cdrom cramfs ext3 floppy raid scsi usb
-INITFS_PKGS	:= $(MODLOOP_PKGS) alpine-base acct
+INITFS_PKGS	= $(MODLOOP_PKGS) alpine-base acct
 
-initfs: $(INITFS)
+initfs-%: $(INITFS)
+	@:
+
+ALL_INITFS = $(foreach flavor,$(KERNEL_FLAVOR),$(subst %,$(flavor),$(INITFS)))
+
+initfs: $(ALL_INITFS)
 
 $(INITFS_DIRSTAMP):
 	@rm -rf $(INITFS_DIR) $(INITFS_TMP)
@@ -148,7 +168,7 @@ $(INITFS_DIRSTAMP):
 		apk fetch $(APK_OPTS) --stdout $$i \
 			| tar -C $(INITFS_DIR) -zx || exit 1; \
 	done
-	@cp -r /etc/apk/keys $(INITFS_DIR)/etc/apk/ || true
+	@cp -r $(APK_KEYS) $(INITFS_DIR)/etc/apk/ || true
 	@touch $@
 
 #$(INITFS):	$(shell mkinitfs -F "$(INITFS_FEATURES)" -l $(KERNEL))
@@ -156,8 +176,10 @@ $(INITFS): $(INITFS_DIRSTAMP) $(MODLOOP_DIRSTAMP)
 	@mkinitfs -F "$(INITFS_FEATURES)" -t $(INITFS_TMP) \
 		-b $(INITFS_DIR) -o $@ $(MODLOOP_KERNEL_RELEASE)
 
-clean-initfs:
-	@rm -rf $(INITFS) $(INITFS_DIRSTAMP) $(INITFS_DIR)
+clean-initfs-%:
+	@rm -rf $(subst %,$*,$(INITFS) $(INITFS_DIRSTAMP)) $(INITFS_DIR)
+
+clean-initfs: $(addprefix clean-initfs-,$(KERNEL_FLAVOR))
 
 #
 # Vserver template rules
@@ -185,6 +207,9 @@ ISOLINUX	:= $(ISO_DIR)/$(ISOLINUX_DIR)
 ISOLINUX_BIN	:= $(ISOLINUX)/isolinux.bin
 ISOLINUX_CFG	:= $(ISOLINUX)/isolinux.cfg
 SYSLINUX_CFG	:= $(ISO_DIR)/syslinux.cfg
+PYGRUB_DIR	:= boot/grub
+PYGRUB		:= $(ISO_DIR)/$(PYGRUB_DIR)
+PYGRUB_CFG	:= $(PYGRUB)/menu.lst
 
 $(ISOLINUX_BIN):
 	@echo "==> iso: install isolinux"
@@ -196,26 +221,40 @@ $(ISOLINUX_BIN):
 $(ISOLINUX_CFG):
 	@echo "==> iso: configure isolinux"
 	@mkdir -p $(dir $(ISOLINUX_BIN))
-	@echo "timeout 20" >$(ISOLINUX_CFG)
-	@echo "prompt 1" >>$(ISOLINUX_CFG)
-	@echo "default $(KERNEL_NAME)" >>$(ISOLINUX_CFG)
-	@echo "label $(KERNEL_NAME)" >>$(ISOLINUX_CFG)
-	@echo "	kernel /boot/$(KERNEL_NAME)" >>$(ISOLINUX_CFG)
-	@echo "	append initrd=/boot/$(INITFS_NAME) alpine_dev=cdrom:iso9660 modules=loop,cramfs,sd-mod,usb-storage,floppy,sr-mod quiet" >>$(ISOLINUX_CFG)
+	@echo "timeout 20" >$@
+	@echo "prompt 1" >>$@
+	@echo "default $(KERNEL_FLAVOR_DEFAULT)" >>$@
+	@for flavor in $(KERNEL_FLAVOR); do \
+		echo "label $$flavor"; \
+		echo "	kernel /boot/$$flavor"; \
+		echo "	append initrd=/boot/$$flavor.gz alpine_dev=cdrom:iso9660 modules=loop,cramfs,sd-mod,usb-storage,floppy,sr-mod quiet"; \
+	done >>$@
 
-$(SYSLINUX_CFG): $(MODLOOP_DIRSTAMP)
+$(SYSLINUX_CFG): $(ALL_MODLOOP_DIRSTAMP)
 	@echo "==> iso: configure syslinux"
 	@echo "timeout 20" >$@
 	@echo "prompt 1" >>$@
-	@echo "default $(KERNEL_NAME)" >>$@
-	@echo "label $(KERNEL_NAME)" >>$@
-	@echo "	kernel /boot/$(KERNEL_NAME)" >>$@
-	@echo "	append initrd=/boot/$(INITFS_NAME) alpine_dev=usbdisk:vfat modules=loop,cramfs,sd-mod,usb-storage quiet" >>$@
+	@echo "default $(KERNEL_FLAVOR_DEFAULT)" >>$@
+	@for flavor in $(KERNEL_FLAVOR); do \
+		echo "label $$flavor"; \
+		echo "	kernel /boot/$$flavor"; \
+		echo "	append initrd=/boot/$$flavor.gz alpine_dev=usbdisk:vfat modules=loop,cramfs,sd-mod,usb-storage quiet"; \
+	done >>$@
+
+$(PYGRUB_CFG):
+	@echo "==> iso: configure pygrub"
+	@mkdir -p $(dir $@)
+	@echo "default 0" >$@
+	@echo "title $(KERNEL_FLAVOR_XEN)" >>$@
+	@echo "root (hd0,0)" >>$@
+	@echo "kernel /boot/$(KERNEL_FLAVOR_XEN) alpine_dev=cdrom:iso9660 modules=loop,cramfs quiet xen BOOT_IMAGE=/boot/$(KERNEL_FLAVOR_XEN)" >>$@
+	@echo "initrd /boot/$(KERNEL_FLAVOR_XEN).gz" >>$@
 
 clean-syslinux:
-	@rm -f $(SYSLINUX_CFG) $(ISOLINUX_CFG) $(ISOLINUX_BIN)
+	@rm -f $(SYSLINUX_CFG) $(ISOLINUX_CFG) $(ISOLINUX_BIN) $(PYGRUB_CFG)
 
-ISO_KERNEL	:= $(ISO_DIR)/boot/$(KERNEL_NAME)
+ISO_KERNEL_STAMP	:= $(DESTDIR)/stamp.kernel.%
+ISO_KERNEL	= $(ISO_DIR)/boot/$*
 ISO_REPOS_DIRSTAMP := $(DESTDIR)/stamp.isorepos
 ISOFS_DIRSTAMP	:= $(DESTDIR)/stamp.isofs
 
@@ -230,17 +269,19 @@ $(ISO_PKGDIR)/APKINDEX.tar.gz: $(APK_FILES)
 		-o $@ $(ISO_PKGDIR)/*.apk
 	@abuild-sign $@
 
-$(ISO_KERNEL): $(MODLOOP_DIRSTAMP)
+$(ISO_KERNEL_STAMP): $(MODLOOP_DIRSTAMP)
 	@echo "==> iso: install kernel $(KERNEL)"
 	@mkdir -p $(dir $(ISO_KERNEL))
 	@apk fetch $(APK_OPTS) --stdout $(KERNEL_PKGNAME) \
 		| tar -C $(ISO_DIR) -xz boot
-	@rm -f $(ISO_DIR)/boot/$(KERNEL_NAME)
-	@ln -s vmlinuz-$(MODLOOP_KERNEL_RELEASE) $@
+	@rm -f $(ISO_KERNEL)
+	@ln -s vmlinuz-$(MODLOOP_KERNEL_RELEASE) $(ISO_KERNEL)
 	@rm -rf $(ISO_DIR)/.[A-Z]* $(ISO_DIR)/.[a-z]* $(ISO_DIR)/lib
 	@touch $@
 
-$(ISOFS_DIRSTAMP): $(MODLOOP) $(INITFS) $(ISOLINUX_CFG) $(ISOLINUX_BIN) $(ISO_KERNEL) $(ISO_REPOS_DIRSTAMP) $(SYSLINUX_CFG)
+ALL_ISO_KERNEL = $(foreach flavor,$(KERNEL_FLAVOR),$(subst %,$(flavor),$(ISO_KERNEL_STAMP)))
+
+$(ISOFS_DIRSTAMP): $(ALL_MODLOOP) $(ALL_INITFS) $(ISOLINUX_CFG) $(ISOLINUX_BIN) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTAMP) $(SYSLINUX_CFG) $(PYGRUB_CFG)
 	@echo "$(ALPINE_NAME)-$(ALPINE_RELEASE) $(BUILD_DATE)" \
 		> $(ISO_DIR)/.alpine-release
 	@touch $@
@@ -342,5 +383,9 @@ all-release: current previous $(profiles)
 			PROFILE=$$i release || break; \
 	done
 
+<<<<<<< HEAD
 edge:
 	@fakeroot $(MAKE) PROFILE=alpine-edge sha1
+=======
+.PRECIOUS: $(MODLOOP_KERNELSTAMP) $(MODLOOP_DIRSTAMP) $(INITFS_DIRSTAMP) $(INITFS) $(ISO_KERNEL_STAMP)
+>>>>>>> sdrik/master
