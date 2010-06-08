@@ -383,9 +383,7 @@ all-release: current previous $(profiles)
 			PROFILE=$$i release || break; \
 	done
 
-<<<<<<< HEAD
 edge:
 	@fakeroot $(MAKE) PROFILE=alpine-edge sha1
-=======
+
 .PRECIOUS: $(MODLOOP_KERNELSTAMP) $(MODLOOP_DIRSTAMP) $(INITFS_DIRSTAMP) $(INITFS) $(ISO_KERNEL_STAMP)
->>>>>>> sdrik/master
