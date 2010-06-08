@@ -10,4 +10,5 @@ mdadm
 lvm2
 debootstrap
 sfdisk
+linux-firmware
 
