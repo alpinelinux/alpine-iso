@@ -348,10 +348,10 @@ sha1: $(ISO_SHA1)
 
 release: $(ISO_SHA1) $(xdelta) $(pkgdiff)
 
-profiles ?= $(alpine alpine-mini alpine-vserver)
+profiles ?= alpine alpine-mini alpine-vserver
 current := $(shell cat current)
 
-all-release: current previous $(profiles)
+all-release: current previous $(addsuffix .conf.mk, $(profiles))
 	@echo "*"
 	@echo "* Making $(current) releases"
 	@echo "*"
