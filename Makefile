@@ -31,15 +31,8 @@ find_apk	= $(addprefix $(ISO_PKGDIR)/,$(call find_apk_file,$(1)))
 get_apk         = $(addsuffix .apk,$(shell apk fetch --simulate $(APK_OPTS) $(1) 2>&1 | sed 's:^Downloading :$(ISO_PKGDIR)/:'))
 expand_apk	= $(shell apk search --quiet $(APK_OPTS) $(1) | sort | uniq)
 
-ifeq ($(KERNEL_FLAVOR),)
-	KERNEL_FLAVOR_DEFAULT	?= grsec
-	KERNEL_FLAVOR_XEN	?= pae
-	KERNEL_FLAVOR		?= $(KERNEL_FLAVOR_DEFAULT) $(KERNEL_FLAVOR_XEN)
-else
-	KERNEL_FLAVOR_DEFAULT	?= $(firstword $(KERNEL_FLAVOR))
-	KERNEL_FLAVOR_XEN	?= pae
-endif
-
+KERNEL_FLAVOR_DEFAULT	?= grsec
+KERNEL_FLAVOR	?= $(KERNEL_FLAVOR_DEFAULT)
 KERNEL_PKGNAME	= linux-$*
 KERNEL_APK	= $(call get_apk,$(KERNEL_PKGNAME))
 
@@ -207,9 +200,6 @@ ISOLINUX	:= $(ISO_DIR)/$(ISOLINUX_DIR)
 ISOLINUX_BIN	:= $(ISOLINUX)/isolinux.bin
 ISOLINUX_CFG	:= $(ISOLINUX)/isolinux.cfg
 SYSLINUX_CFG	:= $(ISO_DIR)/syslinux.cfg
-PYGRUB_DIR	:= boot/grub
-PYGRUB		:= $(ISO_DIR)/$(PYGRUB_DIR)
-PYGRUB_CFG	:= $(PYGRUB)/menu.lst
 
 $(ISOLINUX_BIN):
 	@echo "==> iso: install isolinux"
@@ -241,17 +231,8 @@ $(SYSLINUX_CFG): $(ALL_MODLOOP_DIRSTAMP)
 		echo "	append initrd=/boot/$$flavor.gz alpine_dev=usbdisk:vfat modules=loop,cramfs,sd-mod,usb-storage quiet"; \
 	done >>$@
 
-$(PYGRUB_CFG):
-	@echo "==> iso: configure pygrub"
-	@mkdir -p $(dir $@)
-	@echo "default 0" >$@
-	@echo "title $(KERNEL_FLAVOR_XEN)" >>$@
-	@echo "root (hd0,0)" >>$@
-	@echo "kernel /boot/$(KERNEL_FLAVOR_XEN) alpine_dev=cdrom:iso9660 modules=loop,cramfs quiet xen BOOT_IMAGE=/boot/$(KERNEL_FLAVOR_XEN)" >>$@
-	@echo "initrd /boot/$(KERNEL_FLAVOR_XEN).gz" >>$@
-
 clean-syslinux:
-	@rm -f $(SYSLINUX_CFG) $(ISOLINUX_CFG) $(ISOLINUX_BIN) $(PYGRUB_CFG)
+	@rm -f $(SYSLINUX_CFG) $(ISOLINUX_CFG) $(ISOLINUX_BIN)
 
 ISO_KERNEL_STAMP	:= $(DESTDIR)/stamp.kernel.%
 ISO_KERNEL	= $(ISO_DIR)/boot/$*
@@ -281,7 +262,7 @@ $(ISO_KERNEL_STAMP): $(MODLOOP_DIRSTAMP)
 
 ALL_ISO_KERNEL = $(foreach flavor,$(KERNEL_FLAVOR),$(subst %,$(flavor),$(ISO_KERNEL_STAMP)))
 
-$(ISOFS_DIRSTAMP): $(ALL_MODLOOP) $(ALL_INITFS) $(ISOLINUX_CFG) $(ISOLINUX_BIN) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTAMP) $(SYSLINUX_CFG) $(PYGRUB_CFG)
+$(ISOFS_DIRSTAMP): $(ALL_MODLOOP) $(ALL_INITFS) $(ISOLINUX_CFG) $(ISOLINUX_BIN) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTAMP) $(SYSLINUX_CFG)
 	@echo "$(ALPINE_NAME)-$(ALPINE_RELEASE) $(BUILD_DATE)" \
 		> $(ISO_DIR)/.alpine-release
 	@touch $@
