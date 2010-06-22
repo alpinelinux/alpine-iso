@@ -299,6 +299,8 @@ $(ISO_SHA1):	$(ISO)
 previous	:= $(shell cat previous)
 release_diff	:= $(previous)-$(ALPINE_RELEASE)
 PREV_ISO	:= $(ALPINE_NAME)-$(previous)-$(ALPINE_ARCH).iso
+
+ifneq ($(wildcard $(PREV_ISO)),)
 pkgdiff		:= $(ALPINE_NAME)-$(release_diff).pkgdiff
 $(pkgdiff): cmp-apks-iso previous $(PREV_ISO) $(ISO)
 	@echo "==> Generating $@"
@@ -317,6 +319,7 @@ $(xdelta): $(PREV_ISO) $(ISO)
 
 xdelta: $(xdelta)
 
+endif
 #
 # USB image
 #
