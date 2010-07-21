@@ -143,7 +143,7 @@ INITFS		:= $(ISO_DIR)/boot/$(INITFS_NAME)
 INITFS_DIR	= $(DESTDIR)/initfs.$*
 INITFS_TMP	= $(DESTDIR)/tmp.initfs.$*
 INITFS_DIRSTAMP := $(DESTDIR)/stamp.initfs.%
-INITFS_FEATURES	:= ata base bootchart cdrom cramfs ext3 floppy raid scsi usb
+INITFS_FEATURES	:= ata base bootchart cdrom cramfs ext2 ext3 ext4 floppy raid scsi usb virtio
 INITFS_PKGS	= $(MODLOOP_PKGS) alpine-base acct
 
 initfs-%: $(INITFS)
@@ -369,5 +369,8 @@ all-release: current previous $(addsuffix .conf.mk, $(profiles))
 
 edge:
 	@fakeroot $(MAKE) PROFILE=alpine-edge sha1
+
+vserver:
+	@fakeroot $(MAKE) PROFILE=alpine-vserver sha1
 
 .PRECIOUS: $(MODLOOP_KERNELSTAMP) $(MODLOOP_DIRSTAMP) $(INITFS_DIRSTAMP) $(INITFS) $(ISO_KERNEL_STAMP)
