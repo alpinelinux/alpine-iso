@@ -29,6 +29,7 @@ cksfv
 clamav
 clamsmtp
 conntrack-tools
+cryptsetup
 cutter
 cyrus-sasl
 dahdi-linux
