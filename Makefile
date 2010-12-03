@@ -296,7 +296,7 @@ $(ISO_SHA1):	$(ISO)
 #
 # .pkgdiff
 #
-previous	:= $(shell cat previous)
+previous	:= $(shell cat previous 2>/dev/null)
 release_diff	:= $(previous)-$(ALPINE_RELEASE)
 PREV_ISO	:= $(ALPINE_NAME)-$(previous)-$(ALPINE_ARCH).iso
 
@@ -352,7 +352,11 @@ sha1: $(ISO_SHA1)
 release: $(ISO_SHA1) $(xdelta) $(pkgdiff)
 
 profiles ?= alpine alpine-mini alpine-vserver
-current := $(shell cat current)
+current = $(shell cat current 2>/dev/null)
+
+current:
+	@test -n "$(ALPINE_RELEASE)"
+	@echo $(ALPINE_RELEASE) > $@
 
 all-release: current previous $(addsuffix .conf.mk, $(profiles))
 	@echo "*"
@@ -367,7 +371,7 @@ all-release: current previous $(addsuffix .conf.mk, $(profiles))
 			PROFILE=$$i release || break; \
 	done
 
-edge:
+edge: current
 	@fakeroot $(MAKE) PROFILE=alpine-edge sha1
 
 vserver:
