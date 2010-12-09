@@ -14,8 +14,17 @@ apk-tools
 arpon
 arpwatch
 asterisk
+asterisk-addons
+asterisk-addons-mp3
+asterisk-addons-mysql
+asterisk-addons-ooh323
+asterisk-addons-saycountpl
+asterisk-audio-konf
+asterisk-fax
 asterisk-odbc
 asterisk-pgsql
+asterisk-sample-config
+asterisk-sqlite
 asterisk-tds
 bbsuid
 bind
