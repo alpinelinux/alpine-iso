@@ -46,6 +46,7 @@ dahdi-tools
 dansguardian
 dhcp
 dhcpcd
+dhcrelay
 dnscache
 dnsmasq
 dosfstools
@@ -56,6 +57,7 @@ espeak
 ethtool
 fetchmail
 fping
+fprobe
 haserl
 htop
 igmpproxy
@@ -106,6 +108,7 @@ ncurses-terminfo
 net-snmp
 net-snmp-tools
 nmap
+nrpe
 opennhrp
 openntpd
 openrc
