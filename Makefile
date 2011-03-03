@@ -200,6 +200,7 @@ ISOLINUX	:= $(ISO_DIR)/$(ISOLINUX_DIR)
 ISOLINUX_BIN	:= $(ISOLINUX)/isolinux.bin
 ISOLINUX_CFG	:= $(ISOLINUX)/isolinux.cfg
 SYSLINUX_CFG	:= $(ISO_DIR)/syslinux.cfg
+SYSLINUX_SERIAL	?=
 
 $(ISOLINUX_BIN):
 	@echo "==> iso: install isolinux"
@@ -211,24 +212,26 @@ $(ISOLINUX_BIN):
 $(ISOLINUX_CFG):
 	@echo "==> iso: configure isolinux"
 	@mkdir -p $(dir $(ISOLINUX_BIN))
-	@echo "timeout 20" >$@
+	@echo "$(SYSLINUX_SERIAL)" >$@
+	@echo "timeout 20" >>$@
 	@echo "prompt 1" >>$@
 	@echo "default $(KERNEL_FLAVOR_DEFAULT)" >>$@
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label $$flavor"; \
 		echo "	kernel /boot/$$flavor"; \
-		echo "	append initrd=/boot/$$flavor.gz alpine_dev=cdrom:iso9660 modules=loop,cramfs,sd-mod,usb-storage,floppy,sr-mod quiet"; \
+		echo "	append initrd=/boot/$$flavor.gz alpine_dev=cdrom:iso9660 modules=loop,cramfs,sd-mod,usb-storage,floppy,sr-mod quiet $(BOOT_CONSOLE)"; \
 	done >>$@
 
 $(SYSLINUX_CFG): $(ALL_MODLOOP_DIRSTAMP)
 	@echo "==> iso: configure syslinux"
-	@echo "timeout 20" >$@
+	@echo "$(SYSLINUX_SERIAL)" >$@
+	@echo "timeout 20" >>$@
 	@echo "prompt 1" >>$@
 	@echo "default $(KERNEL_FLAVOR_DEFAULT)" >>$@
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label $$flavor"; \
 		echo "	kernel /boot/$$flavor"; \
-		echo "	append initrd=/boot/$$flavor.gz alpine_dev=usbdisk:vfat modules=loop,cramfs,sd-mod,usb-storage quiet"; \
+		echo "	append initrd=/boot/$$flavor.gz alpine_dev=usbdisk:vfat modules=loop,cramfs,sd-mod,usb-storage quiet $(BOOT_CONSOLE)"; \
 	done >>$@
 
 clean-syslinux:
@@ -372,9 +375,9 @@ all-release: current previous $(addsuffix .conf.mk, $(profiles))
 	done
 
 edge: current
-	@fakeroot $(MAKE) PROFILE=alpine-edge sha1
+	@fakeroot $(MAKE) ALPINE_RELEASE=$(current) PROFILE=alpine-edge sha1
 
 vserver:
-	@fakeroot $(MAKE) PROFILE=alpine-vserver sha1
+	@fakeroot $(MAKE) ALPINE_RELEASE=$(current) PROFILE=alpine-vserver sha1
 
 .PRECIOUS: $(MODLOOP_KERNELSTAMP) $(MODLOOP_DIRSTAMP) $(INITFS_DIRSTAMP) $(INITFS) $(ISO_KERNEL_STAMP)
