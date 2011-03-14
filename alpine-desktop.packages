@@ -1,0 +1,4 @@
+alpine-base
+alpine-desktop
+slim
+xf86-input-evdev

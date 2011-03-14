@@ -7,7 +7,7 @@ PROFILE		?= alpine
 BUILD_DATE	:= $(shell date +%y%m%d)
 ALPINE_RELEASE	?= $(BUILD_DATE)
 ALPINE_NAME	?= alpine-test
-ALPINE_ARCH	:= x86
+ALPINE_ARCH	:= $(shell uname -m)
 DESTDIR		?= $(shell pwd)/isotmp.$(PROFILE)
 
 MKCRAMFS	= mkcramfs
@@ -72,6 +72,7 @@ endif
 	@echo "ALPINE_RELEASE: $(ALPINE_RELEASE)"
 	@echo "KERNEL_FLAVOR:  $(KERNEL_FLAVOR)"
 	@echo "KERNEL:         $(KERNEL)"
+	@echo "APKOVL:         $(APKOVL)"
 	@echo
 
 clean: clean-modloop clean-initfs
@@ -265,7 +266,15 @@ $(ISO_KERNEL_STAMP): $(MODLOOP_DIRSTAMP)
 
 ALL_ISO_KERNEL = $(foreach flavor,$(KERNEL_FLAVOR),$(subst %,$(flavor),$(ISO_KERNEL_STAMP)))
 
-$(ISOFS_DIRSTAMP): $(ALL_MODLOOP) $(ALL_INITFS) $(ISOLINUX_CFG) $(ISOLINUX_BIN) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTAMP) $(SYSLINUX_CFG)
+APKOVL_STAMP = $(DESTDIR)/stamp.isofs.apkovl
+
+$(APKOVL_STAMP):
+	@if [ "x$(APKOVL)" != "x" ]; then \
+		(cd $(ISO_DIR); wget $(APKOVL)); \
+	fi
+	@touch $@
+
+$(ISOFS_DIRSTAMP): $(ALL_MODLOOP) $(ALL_INITFS) $(ISOLINUX_CFG) $(ISOLINUX_BIN) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTAMP) $(APKOVL_STAMP) $(SYSLINUX_CFG)
 	@echo "$(ALPINE_NAME)-$(ALPINE_RELEASE) $(BUILD_DATE)" \
 		> $(ISO_DIR)/.alpine-release
 	@touch $@
@@ -354,7 +363,7 @@ sha1: $(ISO_SHA1)
 
 release: $(ISO_SHA1) $(xdelta) $(pkgdiff)
 
-profiles ?= alpine alpine-mini alpine-vserver
+profiles ?= alpine alpine-mini alpine-vserver alpine-desktop
 current = $(shell cat current 2>/dev/null)
 
 current:
@@ -379,5 +388,8 @@ edge: current
 
 vserver:
 	@fakeroot $(MAKE) ALPINE_RELEASE=$(current) PROFILE=alpine-vserver sha1
+
+desktop: current
+	@fakeroot $(MAKE) ALPINE_RELEASE=$(current) PROFILE=alpine-desktop sha1
 
 .PRECIOUS: $(MODLOOP_KERNELSTAMP) $(MODLOOP_DIRSTAMP) $(INITFS_DIRSTAMP) $(INITFS) $(ISO_KERNEL_STAMP)
