@@ -1,0 +1,10 @@
+alpine-base
+bkeymaps
+openssh
+e2fsprogs
+mdadm
+lvm2
+parted
+debootstrap
+ntfs-3g
+tzdata

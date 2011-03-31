@@ -5,3 +5,4 @@ wpa_cupplicant
 wireless-tools
 linux-firmware
 openssl
+tzdata
