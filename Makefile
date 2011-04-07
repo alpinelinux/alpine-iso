@@ -7,7 +7,8 @@ PROFILE		?= alpine
 BUILD_DATE	:= $(shell date +%y%m%d)
 ALPINE_RELEASE	?= $(BUILD_DATE)
 ALPINE_NAME	?= alpine-test
-ALPINE_ARCH	:= $(shell uname -m)
+ALPINE_ARCH	?= $(shell uname -m | sed 's/^i[0-9]/x/')
+
 DESTDIR		?= $(shell pwd)/isotmp.$(PROFILE)
 
 MKCRAMFS	= mkcramfs
@@ -16,7 +17,7 @@ SUDO		= sudo
 ISO		?= $(ALPINE_NAME)-$(ALPINE_RELEASE)-$(ALPINE_ARCH).iso
 ISO_LINK	?= $(ALPINE_NAME).iso
 ISO_DIR		:= $(DESTDIR)/isofs
-ISO_PKGDIR	:= $(ISO_DIR)/apks
+ISO_PKGDIR	:= $(ISO_DIR)/apks/$(ALPINE_ARCH)
 
 APKS		?= $(shell sed 's/\#.*//; s/\*/\\*/g' $(PROFILE).packages)
 
@@ -244,6 +245,7 @@ ISO_REPOS_DIRSTAMP := $(DESTDIR)/stamp.isorepos
 ISOFS_DIRSTAMP	:= $(DESTDIR)/stamp.isofs
 
 $(ISO_REPOS_DIRSTAMP): $(ISO_PKGDIR)/APKINDEX.tar.gz
+	@touch $(ISO_PKGDIR)/../.boot_repository
 	@touch $(ISO_PKGDIR)/.boot_repository
 	@rm -f $(ISO_PKGDIR)/.SIGN.*
 	@touch $@
