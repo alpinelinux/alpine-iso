@@ -246,14 +246,13 @@ ISOFS_DIRSTAMP	:= $(DESTDIR)/stamp.isofs
 
 $(ISO_REPOS_DIRSTAMP): $(ISO_PKGDIR)/APKINDEX.tar.gz
 	@touch $(ISO_PKGDIR)/../.boot_repository
-	@touch $(ISO_PKGDIR)/.boot_repository
 	@rm -f $(ISO_PKGDIR)/.SIGN.*
 	@touch $@
 
 $(ISO_PKGDIR)/APKINDEX.tar.gz: $(APK_FILES)
 	@echo "==> iso: generating repository index"
 	@apk index --description "$(ALPINE_NAME) $(ALPINE_RELEASE)" \
-		-o $@ $(ISO_PKGDIR)/*.apk
+		--rewrite-arch $(ALPINE_ARCH) -o $@ $(ISO_PKGDIR)/*.apk
 	@abuild-sign $@
 
 $(ISO_KERNEL_STAMP): $(MODLOOP_DIRSTAMP)
