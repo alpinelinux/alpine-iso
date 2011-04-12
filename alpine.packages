@@ -10,6 +10,7 @@ amavis
 alpine-base
 alpine-baselayout 
 alpine-conf
+alpine-mirrors
 apk-tools
 arpon
 arpwatch
