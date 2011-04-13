@@ -13,6 +13,7 @@ DESTDIR		?= $(shell pwd)/isotmp.$(PROFILE)
 
 MKCRAMFS	= mkcramfs
 SUDO		= sudo
+TAR		= busybox tar
 
 ISO		?= $(ALPINE_NAME)-$(ALPINE_RELEASE)-$(ALPINE_ARCH).iso
 ISO_LINK	?= $(ALPINE_NAME).iso
@@ -112,7 +113,7 @@ $(MODLOOP_KERNELSTAMP):
 	@mkdir -p $(MODLOOP_DIR)/lib/modules/
 	@for i in $(MODLOOP_PKGS); do \
 		apk fetch $(APK_OPTS) --stdout $$i \
-			| tar -C $(MODLOOP_DIR) -xz; \
+			| $(TAR) -C $(MODLOOP_DIR) -xz; \
 	done
 	@cp $(MODLOOP_DIR)/usr/share/kernel/$*/kernel.release $@
 
@@ -161,7 +162,7 @@ $(INITFS_DIRSTAMP):
 	@for i in `apk fetch $(APK_OPTS) --simulate -R $(INITFS_PKGS) 2>&1\
 			| sed 's:^Downloading ::; s:-[0-9].*::' | sort | uniq`; do \
 		apk fetch $(APK_OPTS) --stdout $$i \
-			| tar -C $(INITFS_DIR) -zx || exit 1; \
+			| $(TAR) -C $(INITFS_DIR) -zx || exit 1; \
 	done
 	@cp -r $(APK_KEYS) $(INITFS_DIR)/etc/apk/ || true
 	@touch $@
@@ -191,7 +192,7 @@ $(VSTEMPLATE):
 	@mkdir -p "$(VSTEMPLATE_DIR)"
 	@apk add $(APK_OPTS) --initdb --root $(VSTEMPLATE_DIR) \
 		alpine-base
-	@cd $(VSTEMPLATE_DIR) && tar -jcf $@ *
+	@cd $(VSTEMPLATE_DIR) && $(TAR) -jcf $@ *
 
 #
 # ISO rules
@@ -207,7 +208,7 @@ SYSLINUX_SERIAL	?=
 $(ISOLINUX_BIN):
 	@echo "==> iso: install isolinux"
 	@mkdir -p $(dir $(ISOLINUX_BIN))
-	@if ! apk fetch $(APK_REPO) --stdout syslinux | tar -O -zx usr/share/syslinux/isolinux.bin > $@; then \
+	@if ! apk fetch $(APK_REPO) --stdout syslinux | $(TAR) -O -zx usr/share/syslinux/isolinux.bin > $@; then \
 		rm -f $@ && exit 1;\
 	fi
 
@@ -259,7 +260,7 @@ $(ISO_KERNEL_STAMP): $(MODLOOP_DIRSTAMP)
 	@echo "==> iso: install kernel $(KERNEL)"
 	@mkdir -p $(dir $(ISO_KERNEL))
 	@apk fetch $(APK_OPTS) --stdout $(KERNEL_PKGNAME) \
-		| tar -C $(ISO_DIR) -xz boot
+		| $(TAR) -C $(ISO_DIR) -xz boot
 	@rm -f $(ISO_KERNEL)
 	@ln -s vmlinuz-$(MODLOOP_KERNEL_RELEASE) $(ISO_KERNEL)
 	@rm -rf $(ISO_DIR)/.[A-Z]* $(ISO_DIR)/.[a-z]* $(ISO_DIR)/lib
