@@ -388,7 +388,7 @@ all-release: current previous $(addsuffix .conf.mk, $(profiles))
 edge: current
 	@fakeroot $(MAKE) ALPINE_RELEASE=$(current) PROFILE=alpine-edge sha1
 
-vserver:
+vserver: current
 	@fakeroot $(MAKE) ALPINE_RELEASE=$(current) PROFILE=alpine-vserver sha1
 
 desktop: current
