@@ -365,7 +365,7 @@ sha1: $(ISO_SHA1)
 
 release: $(ISO_SHA1) $(xdelta) $(pkgdiff)
 
-profiles ?= alpine alpine-mini alpine-vserver alpine-desktop
+profiles ?= alpine alpine-mini alpine-vserver
 current = $(shell cat current 2>/dev/null)
 
 current:
