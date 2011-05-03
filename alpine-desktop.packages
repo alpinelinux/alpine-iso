@@ -1,6 +1,9 @@
 alpine-base
 alpine-mirrors
 alpine-desktop
-slim
 xf86-input-evdev
+xf86-video-vmware
+xf86-video-intel
+xf86-video-ati
+xf86-video-nv
 tzdata
