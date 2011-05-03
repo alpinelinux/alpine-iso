@@ -1,10 +1,16 @@
 #!/bin/sh
 
-# craete .latest.txt file for mirrors
+# create .latest.txt file for mirrors
 # usage:
+arch=$(uname -m)
+case "$(uname -m)" in
+	i[0-9]86) arch=x86;;
+esac
+
+
 
 current=$(cat current) || exit 1
-releasedir="v${current%.*}/releases"
+releasedir="v${current%.*}/releases/$arch"
 target=.latest.txt
 
 do_stat() {
