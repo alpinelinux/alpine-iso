@@ -130,6 +130,7 @@ sfdisk
 shorewall*
 snort
 sntpc
+socat
 squid
 squid-errors-*
 ssmtp
