@@ -13,9 +13,14 @@ target=.latest.txt
 
 do_stat() {
 	for f in *-$current-$arch.iso; do
+		for hash in sha1 sha256; do
+			if ! [ -f "$f.$hash" ]; then
+				${hash}sum $f > $f.$hash
+			fi
+		done
 		sha1=$(awk '{print $1}' $f.sha1)
-#		sha256=$(awk '{print $1}' $f.sha256)
-		stat -c "%y $releasedir/%n %s $sha1" $f
+		sha256=$(awk '{print $1}' $f.sha256)
+		stat -c "%y $releasedir/%n %s $sha1 $sha256" $f
 	done
 }
 
