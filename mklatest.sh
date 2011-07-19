@@ -8,7 +8,12 @@ case "$(uname -m)" in
 esac
 
 current=$(cat current) || exit 1
-releasedir="v${current%.*}/releases/$arch"
+if [ "${current%.*}" = "$current" ]; then
+	branch=edge
+else
+	branch=v${current%.*}
+fi
+releasedir="$branch/releases/$arch"
 target=.latest.txt
 
 do_stat() {
