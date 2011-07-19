@@ -302,10 +302,15 @@ iso: $(ISO)
 # SHA1 sum of ISO
 #
 ISO_SHA1	:= $(ISO).sha1
+ISO_SHA256	:= $(ISO).sha256
 
 $(ISO_SHA1):	$(ISO)
 	@echo "==> Generating sha1 sum"
 	@sha1sum $(ISO) > $@ || rm -f $@
+
+$(ISO_SHA256):	$(ISO)
+	@echo "==> Generating sha256 sum"
+	@sha256sum $(ISO) > $@ || rm -f $@
 
 #
 # .pkgdiff
@@ -362,8 +367,9 @@ $(ALPINE_NAME).img:	$(USBIMG)
 img:	$(ALPINE_NAME).img
 
 sha1: $(ISO_SHA1)
+sha256: $(ISO_SHA256)
 
-release: $(ISO_SHA1) $(xdelta) $(pkgdiff)
+release: $(ISO_SHA1) $(ISO_SHA256) $(xdelta) $(pkgdiff)
 
 profiles ?= alpine alpine-mini alpine-vserver
 current = $(shell cat current 2>/dev/null)
