@@ -3,6 +3,5 @@ alpine-base
 alpine-mirrors
 wpa_cupplicant
 wireless-tools
-linux-firmware
 openssl
 tzdata

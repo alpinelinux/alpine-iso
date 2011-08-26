@@ -97,7 +97,8 @@ MODLOOP_DIR	= $(DESTDIR)/modloop.$*
 MODLOOP_KERNELSTAMP := $(DESTDIR)/stamp.modloop.kernel.%
 MODLOOP_DIRSTAMP := $(DESTDIR)/stamp.modloop.%
 MODLOOP_EXTRA	?= $(addsuffix -$*, dahdi-linux iscsitarget xtables-addons)
-MODLOOP_PKGS	= $(KERNEL_PKGNAME) $(MODLOOP_EXTRA)
+MODLOOP_FIRMWARE ?= linux-firmware
+MODLOOP_PKGS	= $(KERNEL_PKGNAME) $(MODLOOP_EXTRA) $(MODLOOP_FIRMWARE)
 
 modloop-%: $(MODLOOP)
 	@:
@@ -115,6 +116,9 @@ $(MODLOOP_KERNELSTAMP):
 		apk fetch $(APK_OPTS) --stdout $$i \
 			| $(TAR) -C $(MODLOOP_DIR) -xz; \
 	done
+	@if [ -d "$(MODLOOP_DIR)"/lib/firmware ]; then \
+		mv "$(MODLOOP_DIR)"/lib/firmware "$(MODLOOP_DIR)"/lib/modules/;\
+	fi
 	@cp $(MODLOOP_DIR)/usr/share/kernel/$*/kernel.release $@
 
 MODLOOP_KERNEL_RELEASE = $(shell cat $(subst %,$*,$(MODLOOP_KERNELSTAMP)))
