@@ -11,7 +11,7 @@ ALPINE_ARCH	?= $(shell uname -m | sed 's/^i[0-9]/x/')
 
 DESTDIR		?= $(shell pwd)/isotmp.$(PROFILE)
 
-MKCRAMFS	= mkcramfs
+MKSQUASHFS	= mksquashfs
 SUDO		= sudo
 TAR		= busybox tar
 
@@ -92,7 +92,7 @@ $(APK_FILES):
 #
 # Modloop
 #
-MODLOOP		:= $(ISO_DIR)/boot/%.cmg
+MODLOOP		:= $(ISO_DIR)/boot/%.modloop.squashfs
 MODLOOP_DIR	= $(DESTDIR)/modloop.$*
 MODLOOP_KERNELSTAMP := $(DESTDIR)/stamp.modloop.kernel.%
 MODLOOP_DIRSTAMP := $(DESTDIR)/stamp.modloop.%
@@ -131,7 +131,7 @@ $(MODLOOP_DIRSTAMP): $(MODLOOP_KERNELSTAMP)
 $(MODLOOP): $(MODLOOP_DIRSTAMP)
 	@echo "==> modloop: building image $(notdir $@)"
 	@mkdir -p $(dir $@)
-	@$(MKCRAMFS) $(MODLOOP_DIR)/lib $@
+	@$(MKSQUASHFS) $(MODLOOP_DIR)/lib $@ -comp xz
 
 clean-modloop-%:
 	@rm -rf $(MODLOOP_DIR) $(subst %,$*,$(MODLOOP_DIRSTAMP) $(MODLOOP_KERNELSTAMP) $(MODLOOP))
@@ -150,7 +150,7 @@ INITFS		:= $(ISO_DIR)/boot/$(INITFS_NAME)
 INITFS_DIR	= $(DESTDIR)/initfs.$*
 INITFS_TMP	= $(DESTDIR)/tmp.initfs.$*
 INITFS_DIRSTAMP := $(DESTDIR)/stamp.initfs.%
-INITFS_FEATURES	:= ata base bootchart cdrom cramfs ext2 ext3 ext4 floppy raid scsi usb virtio
+INITFS_FEATURES	:= ata base bootchart cdrom squashfs ext2 ext3 ext4 floppy raid scsi usb virtio
 INITFS_PKGS	= $(MODLOOP_PKGS) alpine-base acct
 
 initfs-%: $(INITFS)
@@ -226,7 +226,7 @@ $(ISOLINUX_CFG):
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label $$flavor"; \
 		echo "	kernel /boot/$$flavor"; \
-		echo "	append initrd=/boot/$$flavor.gz alpine_dev=cdrom:iso9660 modules=loop,cramfs,sd-mod,usb-storage,floppy,sr-mod quiet $(BOOT_CONSOLE)"; \
+		echo "	append initrd=/boot/$$flavor.gz alpine_dev=cdrom:iso9660 modules=loop,squashfs,sd-mod,usb-storage,floppy,sr-mod quiet $(BOOT_CONSOLE)"; \
 	done >>$@
 
 $(SYSLINUX_CFG): $(ALL_MODLOOP_DIRSTAMP)
@@ -238,7 +238,7 @@ $(SYSLINUX_CFG): $(ALL_MODLOOP_DIRSTAMP)
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label $$flavor"; \
 		echo "	kernel /boot/$$flavor"; \
-		echo "	append initrd=/boot/$$flavor.gz alpine_dev=usbdisk:vfat modules=loop,cramfs,sd-mod,usb-storage quiet $(BOOT_CONSOLE)"; \
+		echo "	append initrd=/boot/$$flavor.gz alpine_dev=usbdisk:vfat modules=loop,squashfs,sd-mod,usb-storage quiet $(BOOT_CONSOLE)"; \
 	done >>$@
 
 clean-syslinux:
