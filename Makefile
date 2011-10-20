@@ -14,6 +14,7 @@ DESTDIR		?= $(shell pwd)/isotmp.$(PROFILE)
 MKSQUASHFS	= mksquashfs
 SUDO		= sudo
 TAR		= busybox tar
+APK_SEARCH	= apk search --exact
 
 ISO		?= $(ALPINE_NAME)-$(ALPINE_RELEASE)-$(ALPINE_ARCH).iso
 ISO_LINK	?= $(ALPINE_NAME).iso
@@ -25,13 +26,13 @@ APKS		?= $(shell sed 's/\#.*//; s/\*/\\*/g' $(PROFILE).packages)
 APK_KEYS	?= /etc/apk/keys
 APK_OPTS	:= $(addprefix --repository ,$(APK_REPOS)) --keys-dir $(APK_KEYS)
 
-find_apk_ver	= $(shell apk search $(APK_OPTS) $(1) | sort | uniq)
+find_apk_ver	= $(shell $(APK_SEARCH) $(APK_OPTS) $(1) | sort | uniq)
 find_apk_file	= $(addsuffix .apk,$(call find_apk_ver,$(1)))
 find_apk	= $(addprefix $(ISO_PKGDIR)/,$(call find_apk_file,$(1)))
 
 # get apk does not support wildcards
 get_apk         = $(addsuffix .apk,$(shell apk fetch --simulate $(APK_OPTS) $(1) 2>&1 | sed 's:^Downloading :$(ISO_PKGDIR)/:'))
-expand_apk	= $(shell apk search --quiet $(APK_OPTS) $(1) | sort | uniq)
+expand_apk	= $(shell $(APK_SEARCH) --quiet $(APK_OPTS) $(1) | sort | uniq)
 
 KERNEL_FLAVOR_DEFAULT	?= grsec
 KERNEL_FLAVOR	?= $(KERNEL_FLAVOR_DEFAULT)
