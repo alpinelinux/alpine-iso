@@ -97,7 +97,7 @@ MODLOOP		:= $(ISO_DIR)/boot/%.modloop.squashfs
 MODLOOP_DIR	= $(DESTDIR)/modloop.$*
 MODLOOP_KERNELSTAMP := $(DESTDIR)/stamp.modloop.kernel.%
 MODLOOP_DIRSTAMP := $(DESTDIR)/stamp.modloop.%
-MODLOOP_EXTRA	?= $(addsuffix -$*, dahdi-linux iscsitarget xtables-addons)
+MODLOOP_EXTRA	?= $(addsuffix -$*, dahdi-linux xtables-addons)
 MODLOOP_FIRMWARE ?= linux-firmware
 MODLOOP_PKGS	= $(KERNEL_PKGNAME) $(MODLOOP_EXTRA) $(MODLOOP_FIRMWARE)
 
