@@ -18,5 +18,5 @@ parted
 scstadmin
 smartmontools
 ssmtp
-util-linux-ng
+util-linux
 xfsprogs
