@@ -114,6 +114,7 @@ iptables
 iptraf
 iputils
 irssi
+kamailio-*
 lftp
 links
 lm_sensors
