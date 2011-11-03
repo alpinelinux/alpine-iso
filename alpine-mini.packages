@@ -1,7 +1,7 @@
 bkeymaps
 alpine-base
 alpine-mirrors
-wpa_cupplicant
+wpa_supplicant
 wireless-tools
 openssl
 tzdata
