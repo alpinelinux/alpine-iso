@@ -98,7 +98,7 @@ MODLOOP_DIR	= $(DESTDIR)/modloop.$*
 MODLOOP_KERNELSTAMP := $(DESTDIR)/stamp.modloop.kernel.%
 MODLOOP_DIRSTAMP := $(DESTDIR)/stamp.modloop.%
 MODLOOP_EXTRA	?= $(addsuffix -$*, dahdi-linux xtables-addons)
-MODLOOP_FIRMWARE ?= linux-firmware
+MODLOOP_FIRMWARE ?= linux-firmware dahdi-linux
 MODLOOP_PKGS	= $(KERNEL_PKGNAME) $(MODLOOP_EXTRA) $(MODLOOP_FIRMWARE)
 
 modloop-%: $(MODLOOP)
@@ -403,13 +403,7 @@ all-release: current previous $(addsuffix .conf.mk, $(profiles))
 			PROFILE=$$i release || break; \
 	done
 
-edge: current
-	@fakeroot $(MAKE) ALPINE_RELEASE=$(current) PROFILE=alpine-edge sha1
-
-vserver: current
-	@fakeroot $(MAKE) ALPINE_RELEASE=$(current) PROFILE=alpine-vserver sha1
-
-desktop: current
-	@fakeroot $(MAKE) ALPINE_RELEASE=$(current) PROFILE=alpine-desktop sha1
+edge vserver desktop mini: current
+	@fakeroot $(MAKE) ALPINE_RELEASE=$(current) PROFILE=alpine-$@ sha1
 
 .PRECIOUS: $(MODLOOP_KERNELSTAMP) $(MODLOOP_DIRSTAMP) $(INITFS_DIRSTAMP) $(INITFS) $(ISO_KERNEL_STAMP)
