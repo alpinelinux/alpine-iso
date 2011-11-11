@@ -97,6 +97,7 @@ dnscache
 dnsmasq
 dosfstools
 dovecot
+drill
 e2fsprogs
 email
 espeak
@@ -116,6 +117,7 @@ iptraf
 iputils
 irssi
 kamailio-*
+ldns-tools
 lftp
 links
 lm_sensors
