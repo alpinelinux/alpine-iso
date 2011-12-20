@@ -200,6 +200,8 @@ vim
 vsftpd
 xe-guest-utilities
 xfsprogs
+wireless-tools
+wpa_supplicant
 xtables-addons
 zonenotify
 
