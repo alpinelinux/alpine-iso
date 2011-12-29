@@ -200,6 +200,44 @@ $(VSTEMPLATE):
 	@cd $(VSTEMPLATE_DIR) && $(TAR) -jcf $@ *
 
 #
+# apkovl rules
+#
+
+ifdef BUILD_APKOVL
+APKOVL_DEST	:= $(ISO_DIR)/$(BUILD_APKOVL).apkovl.tar.gz
+APKOVL_DIR	:= $(DESTDIR)/apkovl_$(BUILD_APKOVL)
+endif
+
+# Helper function to link a script to runlevel
+
+rc_add = \
+	@mkdir -p "$(APKOVL_DIR)"/etc/runlevels/"$(2)"; \
+	ln -sf /etc/init.d/"$(1)" "$(APKOVL_DIR)"/etc/runlevels/"$(2)"/"$(1)";
+
+$(ISO_DIR)/xen.apkovl.tar.gz:
+	@rm -rf "$(APKOVL_DIR)"
+	@mkdir -p "$(APKOVL_DIR)"
+	@mkdir -p "$(APKOVL_DIR)"/etc/apk
+	@echo "xen udev" >> "$(APKOVL_DIR)"/etc/apk/world
+	@echo "xen_netback" >> "$(APKOVL_DIR)"/etc/modules
+	@echo "xen_blkback" >> "$(APKOVL_DIR)"/etc/modules
+	$(call rc_add,devfs,sysinit)
+	$(call rc_add,dmesg,sysinit)
+	$(call rc_add,hwclock,boot)
+	$(call rc_add,modules,boot)
+	$(call rc_add,sysctl,boot)
+	$(call rc_add,hostname,boot)
+	$(call rc_add,bootmisc,boot)
+	$(call rc_add,syslog,boot)
+	$(call rc_add,mount-ro,shutdown)
+	$(call rc_add,killprocs,shutdown)
+	$(call rc_add,savecache,shutdown)
+	$(call rc_add,udev,sysinit)
+	$(call rc_add,udev-postmount,default)
+	$(call rc_add,xencommons,default)
+	@cd $(APKOVL_DIR) && $(TAR) -zcf $@ *
+	@echo "==> apkovl: built $@"
+#
 # ISO rules
 #
 
@@ -223,24 +261,42 @@ $(ISOLINUX_CFG):
 	@echo "$(SYSLINUX_SERIAL)" >$@
 	@echo "timeout 20" >>$@
 	@echo "prompt 1" >>$@
+ifeq ($(PROFILE), alpine-xen)
+	@echo "default xen-$(KERNEL_FLAVOR_DEFAULT)" >>$@
+	@for flavor in $(KERNEL_FLAVOR); do \
+		echo "label xen-$$flavor"; \
+		echo "	kernel /boot/mboot.c32"; \
+		echo "	append /boot/xen.gz --- /boot/$$flavor alpine_dev=cdrom:iso9660 modules=loop,squashfs,sd-mod,usb-storage,floppy,sr-mod modloop=/boot/$$flavor.modloop.squashfs $(BOOT_CONSOLE) --- /boot/$$flavor.gz"; \
+	done >>$@
+else
 	@echo "default $(KERNEL_FLAVOR_DEFAULT)" >>$@
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label $$flavor"; \
 		echo "	kernel /boot/$$flavor"; \
 		echo "	append initrd=/boot/$$flavor.gz alpine_dev=cdrom:iso9660 modules=loop,squashfs,sd-mod,usb-storage,floppy,sr-mod quiet $(BOOT_CONSOLE)"; \
 	done >>$@
+endif
 
 $(SYSLINUX_CFG): $(ALL_MODLOOP_DIRSTAMP)
 	@echo "==> iso: configure syslinux"
 	@echo "$(SYSLINUX_SERIAL)" >$@
 	@echo "timeout 20" >>$@
 	@echo "prompt 1" >>$@
+ifeq ($(PROFILE), alpine-xen)
+	@echo "default xen-$(KERNEL_FLAVOR_DEFAULT)" >>$@
+	@for flavor in $(KERNEL_FLAVOR); do \
+		echo "label xen-$$flavor"; \
+		echo "	kernel /boot/mboot.c32"; \
+		echo "	append /boot/xen.gz --- /boot/$$flavor alpine_dev=usbdisk:vfat modules=loop,squashfs,sd-mod,usb-storage modloop=/boot/$$flavor.modloop.squashfs $(BOOT_CONSOLE) --- /boot/$$flavor.gz"; \
+	done >>$@
+else
 	@echo "default $(KERNEL_FLAVOR_DEFAULT)" >>$@
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label $$flavor"; \
 		echo "	kernel /boot/$$flavor"; \
 		echo "	append initrd=/boot/$$flavor.gz alpine_dev=usbdisk:vfat modules=loop,squashfs,sd-mod,usb-storage quiet $(BOOT_CONSOLE)"; \
 	done >>$@
+endif
 
 clean-syslinux:
 	@rm -f $(SYSLINUX_CFG) $(ISOLINUX_CFG) $(ISOLINUX_BIN)
@@ -266,6 +322,12 @@ $(ISO_KERNEL_STAMP): $(MODLOOP_DIRSTAMP)
 	@mkdir -p $(dir $(ISO_KERNEL))
 	@apk fetch $(APK_OPTS) --stdout $(KERNEL_PKGNAME) \
 		| $(TAR) -C $(ISO_DIR) -xz boot
+ifeq ($(PROFILE), alpine-xen)
+	@apk fetch $(APK_OPTS) --stdout xen \
+		| $(TAR) -C $(ISO_DIR) -xz boot
+	@apk fetch $(APK_OPTS) --stdout syslinux \
+		| $(TAR) -xz usr/share/syslinux/mboot.c32 -O > $(ISO_DIR)/boot/mboot.c32
+endif
 	@rm -f $(ISO_KERNEL)
 	@ln -s vmlinuz-$(MODLOOP_KERNEL_RELEASE) $(ISO_KERNEL)
 	@rm -rf $(ISO_DIR)/.[A-Z]* $(ISO_DIR)/.[a-z]* $(ISO_DIR)/lib
@@ -281,7 +343,7 @@ $(APKOVL_STAMP):
 	fi
 	@touch $@
 
-$(ISOFS_DIRSTAMP): $(ALL_MODLOOP) $(ALL_INITFS) $(ISOLINUX_CFG) $(ISOLINUX_BIN) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTAMP) $(APKOVL_STAMP) $(SYSLINUX_CFG)
+$(ISOFS_DIRSTAMP): $(ALL_MODLOOP) $(ALL_INITFS) $(ISOLINUX_CFG) $(ISOLINUX_BIN) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTAMP) $(APKOVL_STAMP) $(SYSLINUX_CFG) $(APKOVL_DEST)
 	@echo "$(ALPINE_NAME)-$(ALPINE_RELEASE) $(BUILD_DATE)" \
 		> $(ISO_DIR)/.alpine-release
 	@touch $@

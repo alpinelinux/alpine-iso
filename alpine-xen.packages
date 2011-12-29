@@ -1,0 +1,10 @@
+bkeymaps
+alpine-base
+alpine-mirrors
+wpa_supplicant
+wireless-tools
+openssl
+tzdata
+xen
+udev
+multipath-tools
