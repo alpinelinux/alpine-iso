@@ -218,9 +218,12 @@ $(ISO_DIR)/xen.apkovl.tar.gz:
 	@rm -rf "$(APKOVL_DIR)"
 	@mkdir -p "$(APKOVL_DIR)"
 	@mkdir -p "$(APKOVL_DIR)"/etc/apk
-	@echo "xen udev" >> "$(APKOVL_DIR)"/etc/apk/world
+	@echo "xen" >> "$(APKOVL_DIR)"/etc/apk/world
 	@echo "xen_netback" >> "$(APKOVL_DIR)"/etc/modules
 	@echo "xen_blkback" >> "$(APKOVL_DIR)"/etc/modules
+	@echo "xenfs" >> "$(APKOVL_DIR)"/etc/modules
+	@echo "xen-platform-pci" >> "$(APKOVL_DIR)"/etc/modules
+	@echo "xen_wdt" >> "$(APKOVL_DIR)"/etc/modules
 	$(call rc_add,devfs,sysinit)
 	$(call rc_add,dmesg,sysinit)
 	$(call rc_add,hwclock,boot)
