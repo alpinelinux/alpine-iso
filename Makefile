@@ -443,7 +443,7 @@ release: $(ISO_SHA1) $(ISO_SHA256) $(xdelta) $(pkgdiff)
 
 
 ifeq ($(ALPINE_ARCH),x86_64)
-profiles ?= alpine alpine-mini alpine-vserver alpine-scst
+profiles ?= alpine alpine-mini alpine-vserver alpine-scst alpine-xen
 else
 profiles ?= alpine alpine-mini alpine-vserver
 endif
@@ -468,7 +468,7 @@ all-release: current previous $(addsuffix .conf.mk, $(profiles))
 			PROFILE=$$i release || break; \
 	done
 
-edge vserver desktop mini: current
+edge vserver desktop mini xen: current
 	@fakeroot $(MAKE) ALPINE_RELEASE=$(current) PROFILE=alpine-$@ sha1
 
 .PRECIOUS: $(MODLOOP_KERNELSTAMP) $(MODLOOP_DIRSTAMP) $(INITFS_DIRSTAMP) $(INITFS) $(ISO_KERNEL_STAMP)
