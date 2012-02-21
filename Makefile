@@ -224,6 +224,7 @@ $(ISO_DIR)/xen.apkovl.tar.gz:
 	@echo "xenfs" >> "$(APKOVL_DIR)"/etc/modules
 	@echo "xen-platform-pci" >> "$(APKOVL_DIR)"/etc/modules
 	@echo "xen_wdt" >> "$(APKOVL_DIR)"/etc/modules
+	@echo "tun" >> "$(APKOVL_DIR)"/etc/modules
 	$(call rc_add,devfs,sysinit)
 	$(call rc_add,dmesg,sysinit)
 	$(call rc_add,hwclock,boot)
