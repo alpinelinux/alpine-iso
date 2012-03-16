@@ -155,6 +155,7 @@ nano
 ncurses-terminfo
 net-snmp
 net-snmp-tools
+network-extras
 nmap
 nrpe
 opennhrp

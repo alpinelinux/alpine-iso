@@ -1,6 +1,7 @@
 alpine-base
 alpine-mirrors
 alpine-desktop
+network-extras
 xf86-input-evdev
 xf86-video-vmware
 xf86-video-intel

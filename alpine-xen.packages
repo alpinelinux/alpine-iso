@@ -1,8 +1,7 @@
 bkeymaps
 alpine-base
 alpine-mirrors
-wpa_supplicant
-wireless-tools
+network-extras
 openssl
 tzdata
 xen

@@ -9,3 +9,4 @@ parted
 debootstrap
 ntfs-3g
 tzdata
+network-extras

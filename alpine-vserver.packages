@@ -11,8 +11,8 @@ mdadm
 lvm2
 debootstrap
 sfdisk
-linux-firmware
 linux-vserver
 acct
 tzdata
+network-extras
 
