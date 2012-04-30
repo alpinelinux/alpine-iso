@@ -238,7 +238,8 @@ $(ISO_DIR)/xen.apkovl.tar.gz:
 	$(call rc_add,savecache,shutdown)
 	$(call rc_add,udev,sysinit)
 	$(call rc_add,udev-postmount,default)
-	$(call rc_add,xencommons,default)
+	$(call rc_add,xenstored,default)
+	$(call rc_add,xenconsoled,default)
 	@cd $(APKOVL_DIR) && $(TAR) -zcf $@ *
 	@echo "==> apkovl: built $@"
 #
