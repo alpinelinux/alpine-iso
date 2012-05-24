@@ -328,7 +328,7 @@ $(ISO_KERNEL_STAMP): $(MODLOOP_DIRSTAMP)
 	@apk fetch $(APK_OPTS) --stdout $(KERNEL_PKGNAME) \
 		| $(TAR) -C $(ISO_DIR) -xz boot
 ifeq ($(PROFILE), alpine-xen)
-	@apk fetch $(APK_OPTS) --stdout xen \
+	@apk fetch $(APK_OPTS) --stdout xen-hypervisor \
 		| $(TAR) -C $(ISO_DIR) -xz boot
 	@apk fetch $(APK_OPTS) --stdout syslinux \
 		| $(TAR) -xz usr/share/syslinux/mboot.c32 -O > $(ISO_DIR)/boot/mboot.c32
