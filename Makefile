@@ -271,7 +271,7 @@ ifeq ($(PROFILE), alpine-xen)
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label xen-$$flavor"; \
 		echo "	kernel /boot/mboot.c32"; \
-		echo "	append /boot/xen.gz --- /boot/$$flavor alpine_dev=cdrom:iso9660 modules=loop,squashfs,sd-mod,usb-storage,floppy,sr-mod modloop=/boot/$$flavor.modloop.squashfs $(BOOT_CONSOLE) --- /boot/$$flavor.gz"; \
+		echo "	append /boot/xen.gz $(XEN_PARAMS) --- /boot/$$flavor alpine_dev=cdrom:iso9660 modules=loop,squashfs,sd-mod,usb-storage,floppy,sr-mod modloop=/boot/$$flavor.modloop.squashfs $(BOOT_CONSOLE) --- /boot/$$flavor.gz"; \
 	done >>$@
 else
 	@echo "default $(KERNEL_FLAVOR_DEFAULT)" >>$@
@@ -292,7 +292,7 @@ ifeq ($(PROFILE), alpine-xen)
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label xen-$$flavor"; \
 		echo "	kernel /boot/mboot.c32"; \
-		echo "	append /boot/xen.gz --- /boot/$$flavor alpine_dev=usbdisk:vfat modules=loop,squashfs,sd-mod,usb-storage modloop=/boot/$$flavor.modloop.squashfs $(BOOT_CONSOLE) --- /boot/$$flavor.gz"; \
+		echo "	append /boot/xen.gz $(XEN_PARAMS) --- /boot/$$flavor alpine_dev=usbdisk:vfat modules=loop,squashfs,sd-mod,usb-storage modloop=/boot/$$flavor.modloop.squashfs $(BOOT_CONSOLE) --- /boot/$$flavor.gz"; \
 	done >>$@
 else
 	@echo "default $(KERNEL_FLAVOR_DEFAULT)" >>$@
