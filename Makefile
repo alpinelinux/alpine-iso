@@ -170,6 +170,10 @@ $(INITFS_DIRSTAMP):
 			| $(TAR) -C $(INITFS_DIR) -zx || exit 1; \
 	done
 	@cp -r $(APK_KEYS) $(INITFS_DIR)/etc/apk/ || true
+	@if ! [ -e "$(INITFS_DIR)"/etc/mdev.conf ]; then \
+		cat $(INITFS_DIR)/etc/mdev.conf.d/*.conf \
+			> $(INITFS_DIR)/etc/mdev.conf; \
+	fi
 	@touch $@
 
 #$(INITFS):	$(shell mkinitfs -F "$(INITFS_FEATURES)" -l $(KERNEL))
