@@ -253,9 +253,19 @@ $(ISO_DIR)/xen.apkovl.tar.gz:
 ISOLINUX_DIR	:= boot/isolinux
 ISOLINUX	:= $(ISO_DIR)/$(ISOLINUX_DIR)
 ISOLINUX_BIN	:= $(ISOLINUX)/isolinux.bin
+ISOLINUX_C32	:= $(ISOLINUX)/ldlinux.c32 $(ISOLINUX)/libutil.c32
 ISOLINUX_CFG	:= $(ISOLINUX)/isolinux.cfg
 SYSLINUX_CFG	:= $(ISO_DIR)/syslinux.cfg
 SYSLINUX_SERIAL	?=
+
+
+
+$(ISOLINUX_C32):
+	@echo "==> iso: install $(notdir $@)"
+	@mkdir -p $(dir $@)
+	@if ! apk fetch $(APK_REPO) --stdout syslinux | $(TAR) -O -zx usr/share/syslinux/$(notdir $@) > $@; then \
+		rm -f $@ && exit 1;\
+	fi
 
 $(ISOLINUX_BIN):
 	@echo "==> iso: install isolinux"
@@ -352,7 +362,7 @@ $(APKOVL_STAMP):
 	fi
 	@touch $@
 
-$(ISOFS_DIRSTAMP): $(ALL_MODLOOP) $(ALL_INITFS) $(ISOLINUX_CFG) $(ISOLINUX_BIN) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTAMP) $(APKOVL_STAMP) $(SYSLINUX_CFG) $(APKOVL_DEST)
+$(ISOFS_DIRSTAMP): $(ALL_MODLOOP) $(ALL_INITFS) $(ISOLINUX_CFG) $(ISOLINUX_BIN) $(ISOLINUX_C32) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTAMP) $(APKOVL_STAMP) $(SYSLINUX_CFG) $(APKOVL_DEST)
 	@echo "$(ALPINE_NAME)-$(ALPINE_RELEASE) $(BUILD_DATE)" \
 		> $(ISO_DIR)/.alpine-release
 	@touch $@
