@@ -1,5 +1,0 @@
-ALPINE_NAME     := alpine-scst
-MODLOOP_EXTRA   :=
-KERNEL_FLAVOR   := scst
-KERNEL_FLAVOR_DEFAULT := scst
-
