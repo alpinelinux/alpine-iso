@@ -286,14 +286,14 @@ ifeq ($(PROFILE), alpine-xen)
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label xen-$$flavor"; \
 		echo "	kernel /$(ISOLINUX_DIR)/mboot.c32"; \
-		echo "	append /boot/xen.gz $(XEN_PARAMS) --- /boot/$$flavor alpine_dev=cdrom:iso9660 modules=loop,squashfs,sd-mod,usb-storage,floppy,sr-mod modloop=/boot/$$flavor.modloop.squashfs $(BOOT_CONSOLE) --- /boot/$$flavor.gz"; \
+		echo "	append /boot/xen.gz $(XEN_PARAMS) --- /boot/$$flavor alpine_dev=cdrom:iso9660 modules=loop,squashfs,sd-mod,usb-storage,floppy,sr-mod modloop=/boot/$$flavor.modloop.squashfs $(BOOT_OPTS) --- /boot/$$flavor.gz"; \
 	done >>$@
 else
 	@echo "default $(KERNEL_FLAVOR_DEFAULT)" >>$@
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label $$flavor"; \
 		echo "	kernel /boot/$$flavor"; \
-		echo "	append initrd=/boot/$$flavor.gz alpine_dev=cdrom:iso9660 modules=loop,squashfs,sd-mod,usb-storage,floppy,sr-mod quiet $(BOOT_CONSOLE)"; \
+		echo "	append initrd=/boot/$$flavor.gz alpine_dev=cdrom:iso9660 modules=loop,squashfs,sd-mod,usb-storage,floppy,sr-mod quiet $(BOOT_OPTS)"; \
 	done >>$@
 endif
 
@@ -307,14 +307,14 @@ ifeq ($(PROFILE), alpine-xen)
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label xen-$$flavor"; \
 		echo "	kernel /$(ISOLINUX_DIR)/mboot.c32"; \
-		echo "	append /boot/xen.gz $(XEN_PARAMS) --- /boot/$$flavor alpine_dev=usbdisk:vfat modules=loop,squashfs,sd-mod,usb-storage modloop=/boot/$$flavor.modloop.squashfs $(BOOT_CONSOLE) --- /boot/$$flavor.gz"; \
+		echo "	append /boot/xen.gz $(XEN_PARAMS) --- /boot/$$flavor alpine_dev=usbdisk:vfat modules=loop,squashfs,sd-mod,usb-storage modloop=/boot/$$flavor.modloop.squashfs $(BOOT_OPTS) --- /boot/$$flavor.gz"; \
 	done >>$@
 else
 	@echo "default $(KERNEL_FLAVOR_DEFAULT)" >>$@
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label $$flavor"; \
 		echo "	kernel /boot/$$flavor"; \
-		echo "	append initrd=/boot/$$flavor.gz alpine_dev=usbdisk:vfat modules=loop,squashfs,sd-mod,usb-storage quiet $(BOOT_CONSOLE)"; \
+		echo "	append initrd=/boot/$$flavor.gz alpine_dev=usbdisk:vfat modules=loop,squashfs,sd-mod,usb-storage quiet $(BOOT_OPTS)"; \
 	done >>$@
 endif
 
