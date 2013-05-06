@@ -253,7 +253,8 @@ $(ISO_DIR)/xen.apkovl.tar.gz:
 ISOLINUX_DIR	:= boot/isolinux
 ISOLINUX	:= $(ISO_DIR)/$(ISOLINUX_DIR)
 ISOLINUX_BIN	:= $(ISOLINUX)/isolinux.bin
-ISOLINUX_C32	:= $(ISOLINUX)/ldlinux.c32 $(ISOLINUX)/libutil.c32
+ISOLINUX_C32	:= $(ISOLINUX)/ldlinux.c32 $(ISOLINUX)/libutil.c32 \
+			$(ISOLINUX)/libcom32.c32 $(ISOLINUX)/mboot.c32
 ISOLINUX_CFG	:= $(ISOLINUX)/isolinux.cfg
 SYSLINUX_CFG	:= $(ISO_DIR)/syslinux.cfg
 SYSLINUX_SERIAL	?=
@@ -284,7 +285,7 @@ ifeq ($(PROFILE), alpine-xen)
 	@echo "default xen-$(KERNEL_FLAVOR_DEFAULT)" >>$@
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label xen-$$flavor"; \
-		echo "	kernel /boot/mboot.c32"; \
+		echo "	kernel /$(ISOLINUX_DIR)/mboot.c32"; \
 		echo "	append /boot/xen.gz $(XEN_PARAMS) --- /boot/$$flavor alpine_dev=cdrom:iso9660 modules=loop,squashfs,sd-mod,usb-storage,floppy,sr-mod modloop=/boot/$$flavor.modloop.squashfs $(BOOT_CONSOLE) --- /boot/$$flavor.gz"; \
 	done >>$@
 else
@@ -305,7 +306,7 @@ ifeq ($(PROFILE), alpine-xen)
 	@echo "default xen-$(KERNEL_FLAVOR_DEFAULT)" >>$@
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label xen-$$flavor"; \
-		echo "	kernel /boot/mboot.c32"; \
+		echo "	kernel /$(ISOLINUX_DIR)/mboot.c32"; \
 		echo "	append /boot/xen.gz $(XEN_PARAMS) --- /boot/$$flavor alpine_dev=usbdisk:vfat modules=loop,squashfs,sd-mod,usb-storage modloop=/boot/$$flavor.modloop.squashfs $(BOOT_CONSOLE) --- /boot/$$flavor.gz"; \
 	done >>$@
 else
@@ -344,8 +345,6 @@ $(ISO_KERNEL_STAMP): $(MODLOOP_DIRSTAMP)
 ifeq ($(PROFILE), alpine-xen)
 	@apk fetch $(APK_OPTS) --stdout xen-hypervisor \
 		| $(TAR) -C $(ISO_DIR) -xz boot
-	@apk fetch $(APK_OPTS) --stdout syslinux \
-		| $(TAR) -xz usr/share/syslinux/mboot.c32 -O > $(ISO_DIR)/boot/mboot.c32
 endif
 	@rm -f $(ISO_KERNEL)
 	@ln -s vmlinuz-$(MODLOOP_KERNEL_RELEASE) $(ISO_KERNEL)
