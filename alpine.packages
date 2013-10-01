@@ -72,6 +72,7 @@ asterisk-pgsql
 asterisk-sample-config
 asterisk-sqlite
 asterisk-tds
+awall
 bbsuid
 bind
 bind-libs
