@@ -250,7 +250,7 @@ $(ISO_DIR)/xen.apkovl.tar.gz:
 # ISO rules
 #
 
-ISOLINUX_DIR	:= boot/isolinux
+ISOLINUX_DIR	:= boot/syslinux
 ISOLINUX	:= $(ISO_DIR)/$(ISOLINUX_DIR)
 ISOLINUX_BIN	:= $(ISOLINUX)/isolinux.bin
 ISOLINUX_C32	:= $(ISOLINUX)/ldlinux.c32 $(ISOLINUX)/libutil.c32 \
