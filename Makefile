@@ -256,7 +256,7 @@ ISOLINUX_BIN	:= $(ISOLINUX)/isolinux.bin
 ISOLINUX_C32	:= $(ISOLINUX)/ldlinux.c32 $(ISOLINUX)/libutil.c32 \
 			$(ISOLINUX)/libcom32.c32 $(ISOLINUX)/mboot.c32
 ISOLINUX_CFG	:= $(ISOLINUX)/isolinux.cfg
-SYSLINUX_CFG	:= $(ISO_DIR)/syslinux.cfg
+SYSLINUX_CFG	:= $(ISOLINUX)/syslinux.cfg
 SYSLINUX_SERIAL	?=
 
 
@@ -427,10 +427,10 @@ endif
 #
 # USB image
 #
-USBIMG 		:= $(ALPINE_NAME)-$(ALPINE_RELEASE)-$(ALPINE_ARCH).img
+USBIMG		:= $(ALPINE_NAME)-$(ALPINE_RELEASE)-$(ALPINE_ARCH).img
 USBIMG_FREE	?= 8192
-USBIMG_SIZE 	= $(shell echo $$(( `du -s $(ISO_DIR) | awk '{print $$1}'` + $(USBIMG_FREE) )) )
-MBRPATH 	:= /usr/share/syslinux/mbr.bin
+USBIMG_SIZE	= $(shell echo $$(( `du -s $(ISO_DIR) | awk '{print $$1}'` + $(USBIMG_FREE) )) )
+MBRPATH		:= /usr/share/syslinux/mbr.bin
 
 $(USBIMG): $(ISOFS_DIRSTAMP)
 	@echo "==> Generating $@"
