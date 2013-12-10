@@ -25,6 +25,7 @@ APKS		?= $(shell sed 's/\#.*//; s/\*/\\*/g' $(PROFILE).packages)
 
 APK_KEYS	?= /etc/apk/keys
 APK_OPTS	:= $(addprefix --repository ,$(APK_REPOS)) --keys-dir $(APK_KEYS)
+APK_FETCH_STDOUT := apk fetch $(APK_OPTS) --stdout --quiet
 
 find_apk_ver	= $(shell $(APK_SEARCH) $(APK_OPTS) $(1) | sort | uniq)
 find_apk_file	= $(addsuffix .apk,$(call find_apk_ver,$(1)))
@@ -114,7 +115,8 @@ $(MODLOOP_KERNELSTAMP):
 	@rm -rf $(MODLOOP_DIR)
 	@mkdir -p $(MODLOOP_DIR)/lib/modules/
 	@for i in $(MODLOOP_PKGS); do \
-		apk fetch $(APK_OPTS) --stdout $$i \
+		echo "Fetching $$i"; \
+		$(APK_FETCH_STDOUT) $$i \
 			| $(TAR) -C $(MODLOOP_DIR) -xz; \
 	done
 	@if [ -d "$(MODLOOP_DIR)"/lib/firmware ]; then \
@@ -164,9 +166,10 @@ initfs: $(ALL_INITFS)
 $(INITFS_DIRSTAMP):
 	@rm -rf $(INITFS_DIR) $(INITFS_TMP)
 	@mkdir -p $(INITFS_DIR) $(INITFS_TMP)
-	@for i in `apk fetch $(APK_OPTS) --simulate -R $(INITFS_PKGS) 2>&1\
+	@for i in `apk fetch $(APK_OPTS) --simulate -R $(INITFS_PKGS) \
 			| sed 's:^Downloading ::; s:-[0-9].*::' | sort | uniq`; do \
-		apk fetch $(APK_OPTS) --stdout $$i \
+		echo "Fetching $$i"; \
+		$(APK_FETCH_STDOUT) $$i \
 			| $(TAR) -C $(INITFS_DIR) -zx || exit 1; \
 	done
 	@cp -r $(APK_KEYS) $(INITFS_DIR)/etc/apk/ || true
@@ -264,14 +267,16 @@ SYSLINUX_SERIAL	?=
 $(ISOLINUX_C32):
 	@echo "==> iso: install $(notdir $@)"
 	@mkdir -p $(dir $@)
-	@if ! apk fetch $(APK_REPO) --stdout syslinux | $(TAR) -O -zx usr/share/syslinux/$(notdir $@) > $@; then \
+	@if ! $(APK_FETCH_STDOUT) syslinux \
+		| $(TAR) -O -zx usr/share/syslinux/$(notdir $@) > $@; then \
 		rm -f $@ && exit 1;\
 	fi
 
 $(ISOLINUX_BIN):
 	@echo "==> iso: install isolinux"
 	@mkdir -p $(dir $(ISOLINUX_BIN))
-	@if ! apk fetch $(APK_REPO) --stdout syslinux | $(TAR) -O -zx usr/share/syslinux/isolinux.bin > $@; then \
+	@if ! $(APK_FETCH_STDOUT) syslinux \
+		| $(TAR) -O -zx usr/share/syslinux/isolinux.bin > $@; then \
 		rm -f $@ && exit 1;\
 	fi
 
@@ -340,10 +345,12 @@ $(ISO_PKGDIR)/APKINDEX.tar.gz: $(APK_FILES)
 $(ISO_KERNEL_STAMP): $(MODLOOP_DIRSTAMP)
 	@echo "==> iso: install kernel $(KERNEL)"
 	@mkdir -p $(dir $(ISO_KERNEL))
-	@apk fetch $(APK_OPTS) --stdout $(KERNEL_PKGNAME) \
+	@echo "Fetching $(KERNEL_PKGNAME)"
+	@$(APK_FETCH_STDOUT) $(KERNEL_PKGNAME) \
 		| $(TAR) -C $(ISO_DIR) -xz boot
 ifeq ($(PROFILE), alpine-xen)
-	@apk fetch $(APK_OPTS) --stdout xen-hypervisor \
+	@echo "Fetching xen-hypervisor"
+	@$(APK_FETCH_STDOUT) xen-hypervisor \
 		| $(TAR) -C $(ISO_DIR) -xz boot
 endif
 	@rm -f $(ISO_KERNEL)
