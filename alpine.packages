@@ -67,10 +67,12 @@ asterisk-addons-ooh323
 asterisk-addons-saycountpl
 asterisk-audio-konf
 asterisk-fax
+asterisk-mobile
 asterisk-odbc
 asterisk-pgsql
 asterisk-sample-config
-asterisk-sqlite
+asterisk-speex
+asterisk-srtp
 asterisk-tds
 awall
 bbsuid
