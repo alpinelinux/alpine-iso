@@ -354,7 +354,7 @@ ifeq ($(PROFILE), alpine-xen)
 		| $(TAR) -C $(ISO_DIR) -xz boot
 endif
 	@rm -f $(ISO_KERNEL)
-	@ln -s vmlinuz-$(MODLOOP_KERNEL_RELEASE) $(ISO_KERNEL)
+	@ln -s vmlinuz-$(KERNEL_FLAVOR) $(ISO_KERNEL)
 	@rm -rf $(ISO_DIR)/.[A-Z]* $(ISO_DIR)/.[a-z]* $(ISO_DIR)/lib
 	@touch $@
 
