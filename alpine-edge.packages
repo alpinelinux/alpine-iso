@@ -3,4 +3,6 @@ alpine-base
 alpine-mirrors
 network-extras
 openssl
+openssh
+chrony
 tzdata
