@@ -354,7 +354,11 @@ ifeq ($(PROFILE), alpine-xen)
 		| $(TAR) -C $(ISO_DIR) -xz boot
 endif
 	@rm -f $(ISO_KERNEL)
-	@ln -s vmlinuz-$(KERNEL_FLAVOR) $(ISO_KERNEL)
+	@if [ "$(KERNEL_FLAVOR)" = "vanilla" ]; then \
+		ln -s vmlinuz $(ISO_KERNEL);\
+	else \
+		ln -s vmlinuz-$(KERNEL_FLAVOR) $(ISO_KERNEL);\
+	fi
 	@rm -rf $(ISO_DIR)/.[A-Z]* $(ISO_DIR)/.[a-z]* $(ISO_DIR)/lib
 	@touch $@
 
@@ -465,9 +469,9 @@ release: $(ISO_SHA1) $(ISO_SHA256) $(xdelta) $(pkgdiff)
 
 
 ifeq ($(ALPINE_ARCH),x86_64)
-profiles ?= alpine alpine-mini alpine-vserver alpine-xen
+profiles ?= alpine alpine-mini alpine-xen
 else
-profiles ?= alpine alpine-mini alpine-vserver
+profiles ?= alpine alpine-mini
 endif
 
 
@@ -490,7 +494,7 @@ all-release: current previous $(addsuffix .conf.mk, $(profiles))
 			PROFILE=$$i release || break; \
 	done
 
-edge vserver desktop mini xen: current
+edge vserver desktop mini xen vanilla: current
 	@fakeroot $(MAKE) ALPINE_RELEASE=$(current) PROFILE=alpine-$@ sha1
 
 .PRECIOUS: $(MODLOOP_KERNELSTAMP) $(MODLOOP_DIRSTAMP) $(INITFS_DIRSTAMP) $(INITFS) $(ISO_KERNEL_STAMP)
