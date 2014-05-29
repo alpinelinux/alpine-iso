@@ -190,23 +190,6 @@ clean-initfs-%:
 clean-initfs: $(addprefix clean-initfs-,$(KERNEL_FLAVOR))
 
 #
-# Vserver template rules
-#
-VSTEMPLATE	:= $(ISO_DIR)/vs-template.tar.bz2
-VSTEMPLATE_DIR 	:= $(DESTDIR)/vs-template
-
-vstemplate: $(VSTEMPLATE)
-	@echo "==> vstemplate: built $(VSTEMPLATE)"
-
-#must be run as root or in fakeroot
-$(VSTEMPLATE):
-	@rm -rf "$(VSTEMPLATE_DIR)"
-	@mkdir -p "$(VSTEMPLATE_DIR)"
-	@apk add $(APK_OPTS) --initdb --root $(VSTEMPLATE_DIR) \
-		alpine-base
-	@cd $(VSTEMPLATE_DIR) && $(TAR) -jcf $@ *
-
-#
 # apkovl rules
 #
 
@@ -494,7 +477,7 @@ all-release: current previous $(addsuffix .conf.mk, $(profiles))
 			PROFILE=$$i release || break; \
 	done
 
-edge vserver desktop mini xen vanilla: current
+edge desktop mini xen vanilla: current
 	@fakeroot $(MAKE) ALPINE_RELEASE=$(current) PROFILE=alpine-$@ sha1
 
 .PRECIOUS: $(MODLOOP_KERNELSTAMP) $(MODLOOP_DIRSTAMP) $(INITFS_DIRSTAMP) $(INITFS) $(ISO_KERNEL_STAMP)
