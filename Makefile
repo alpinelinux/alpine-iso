@@ -166,6 +166,7 @@ initfs: $(ALL_INITFS)
 $(INITFS_DIRSTAMP):
 	@rm -rf $(INITFS_DIR) $(INITFS_TMP)
 	@mkdir -p $(INITFS_DIR) $(INITFS_TMP)
+	@apk fetch $(APK_OPTS) --simulate -R $(INITFS_PKGS) >/dev/null
 	@for i in `apk fetch $(APK_OPTS) --simulate -R $(INITFS_PKGS) \
 			| sed 's:^Downloading ::; s:-[0-9].*::' | sort | uniq`; do \
 		echo "Fetching $$i"; \
