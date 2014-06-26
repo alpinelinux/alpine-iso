@@ -453,7 +453,7 @@ release: $(ISO_SHA1) $(ISO_SHA256) $(xdelta) $(pkgdiff)
 
 
 ifeq ($(ALPINE_ARCH),x86_64)
-profiles ?= alpine alpine-mini alpine-vanilla
+profiles ?= alpine alpine-mini alpine-vanilla alpine-xen
 else
 profiles ?= alpine alpine-mini alpine-vanilla
 endif
