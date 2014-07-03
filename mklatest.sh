@@ -29,7 +29,27 @@ do_stat() {
 	done
 }
 
+do_yaml() {
+	echo "---"
+	do_stat | while read date time isopath size sha1 sha256; do
+		iso=${isopath##*/}
+		flavor=${iso%-${current}-${arch}.iso}
+		echo "-"
+		echo "  branch: $branch"
+		echo "  arch: $arch"
+		echo "  version: $current"
+		echo "  flavor: $flavor"
+		echo "  iso: $iso"
+		echo "  date: $date"
+		echo "  time: $time"
+		echo "  size: $size"
+		echo "  sha1: $sha1"
+		echo "  sha256: $sha256"
+	done
+}
+
 do_stat || exit 1
 do_stat > $target
 
+do_yaml > latest-releases.yaml
 
