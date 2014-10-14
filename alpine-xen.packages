@@ -5,5 +5,4 @@ network-extras
 openssl
 tzdata
 xen
-xen-xend
 multipath-tools
