@@ -24,30 +24,13 @@ ISO_PKGDIR	:= $(ISO_DIR)/apks/$(ALPINE_ARCH)
 APKS		?= $(shell sed 's/\#.*//; s/\*/\\*/g' $(PROFILE).packages)
 
 APK_KEYS	?= /etc/apk/keys
-APK_OPTS	:= $(addprefix --repository ,$(APK_REPOS)) --keys-dir $(APK_KEYS)
+APK_OPTS	:= $(addprefix --repository ,$(APK_REPOS)) --keys-dir $(APK_KEYS) --repositories-file /etc/apk/repositories
+
 APK_FETCH_STDOUT := apk fetch $(APK_OPTS) --stdout --quiet
-
-find_apk_ver	= $(shell $(APK_SEARCH) $(APK_OPTS) $(1) | sort | uniq)
-find_apk_file	= $(addsuffix .apk,$(call find_apk_ver,$(1)))
-find_apk	= $(addprefix $(ISO_PKGDIR)/,$(call find_apk_file,$(1)))
-
-# get apk does not support wildcards
-get_apk         = $(addsuffix .apk,$(shell apk fetch --simulate $(APK_OPTS) $(1) 2>&1 | sed 's:^Downloading :$(ISO_PKGDIR)/:'))
-expand_apk	= $(shell $(APK_SEARCH) --quiet $(APK_OPTS) $(1) | sort | uniq)
 
 KERNEL_FLAVOR_DEFAULT	?= grsec
 KERNEL_FLAVOR	?= $(KERNEL_FLAVOR_DEFAULT)
 KERNEL_PKGNAME	= linux-$*
-KERNEL_APK	= $(call get_apk,$(KERNEL_PKGNAME))
-
-KERNEL		= $(word 3,$(subst -, ,$(notdir $(KERNEL_APK))))-$(word 2,$(subst -, ,$(notdir $(KERNEL_APK))))
-
-ALPINEBASELAYOUT_APK := $(call find_apk,alpine-baselayout)
-BUSYBOX_APK	:= $(call get_apk,busybox)
-APK_TOOLS_APK	:= $(call get_apk,apk-tools)
-STRACE_APK	:= $(call get_apk,strace)
-
-APK_FILES	:= $(call get_apk,$(call expand_apk,$(APKS)))
 
 all: isofs
 
@@ -56,21 +39,10 @@ help:
 	@echo
 	@echo "Type 'make iso' to build $(ISO)"
 	@echo
-	@echo "I will use the following sources files:"
-	@echo " 1. $(notdir $(KERNEL_APK)) (looks like $(KERNEL))"
-	@echo " 2. $(notdir $(MOD_APKS))"
-	@echo " 3. $(notdir $(ALPINEBASELAYOUT_APK))"
-	@echo " 5. $(notdir $(BUSYBOX_APK))"
-ifeq ($(APK_BIN),)
-	@echo " 6. $(notdir $(APK_TOOLS_APK))"
-else
-	@echo " 6. $(APK_BIN)"
-endif
-	@echo
 	@echo "ALPINE_NAME:    $(ALPINE_NAME)"
 	@echo "ALPINE_RELEASE: $(ALPINE_RELEASE)"
 	@echo "KERNEL_FLAVOR:  $(KERNEL_FLAVOR)"
-	@echo "KERNEL:         $(KERNEL)"
+	@echo "KERNEL_PKGNAME: $(KERNEL_PKGNAME)"
 	@echo "APKOVL:         $(APKOVL)"
 	@echo
 
@@ -83,8 +55,6 @@ $(APK_FILES):
 	@mkdir -p "$(dir $@)";\
 	p="$(notdir $(basename $@))";\
 	apk fetch $(APK_OPTS) -R -v -o "$(dir $@)" $${p%-[0-9]*}
-#	apk fetch $(APK_OPTS) -R -v -o "$(dir $@)" \
-#		`apk search -q $(APK_OPTS) $(APKS) | sort | uniq`
 
 #
 # Modloop
@@ -107,13 +77,13 @@ modloop: $(ALL_MODLOOP)
 
 $(MODLOOP_KERNELSTAMP):
 	@echo "==> modloop: Unpacking kernel modules";
-	@rm -rf $(MODLOOP_DIR)
-	@mkdir -p $(MODLOOP_DIR)/lib/modules/
-	@for i in $(MODLOOP_PKGS); do \
-		echo "Fetching $$i"; \
-		$(APK_FETCH_STDOUT) $$i \
-			| $(TAR) -C $(MODLOOP_DIR) -xz; \
-	done
+	@rm -rf $(MODLOOP_DIR) && mkdir -p $(MODLOOP_DIR)
+	@apk add $(APK_OPTS) \
+		--initdb \
+		--update \
+		--no-script \
+		--root $(MODLOOP_DIR) \
+		$(MODLOOP_PKGS)
 	@if [ -d "$(MODLOOP_DIR)"/lib/firmware ]; then \
 		mv "$(MODLOOP_DIR)"/lib/firmware "$(MODLOOP_DIR)"/lib/modules/;\
 	fi
@@ -141,7 +111,6 @@ clean-modloop: $(addprefix clean-modloop-,$(KERNEL_FLAVOR))
 #
 
 # isolinux cannot handle - in filenames
-#INITFS_NAME	:= initramfs-$(MODLOOP_KERNEL_RELEASE)
 INITFS_NAME	:= %.gz
 INITFS		:= $(ISO_DIR)/boot/$(INITFS_NAME)
 
@@ -161,13 +130,12 @@ initfs: $(ALL_INITFS)
 $(INITFS_DIRSTAMP):
 	@rm -rf $(INITFS_DIR) $(INITFS_TMP)
 	@mkdir -p $(INITFS_DIR) $(INITFS_TMP)
-	@apk fetch $(APK_OPTS) --simulate -R $(INITFS_PKGS) >/dev/null
-	@for i in `apk fetch $(APK_OPTS) --simulate -R $(INITFS_PKGS) \
-			| sed 's:^Downloading ::; s:-[0-9].*::' | sort | uniq`; do \
-		echo "Fetching $$i"; \
-		$(APK_FETCH_STDOUT) $$i \
-			| $(TAR) -C $(INITFS_DIR) -zx || exit 1; \
-	done
+	@apk add $(APK_OPTS) \
+		--initdb \
+		--update \
+		--no-script \
+		--root $(INITFS_DIR) \
+		$(INITFS_PKGS)
 	@cp -r $(APK_KEYS) $(INITFS_DIR)/etc/apk/ || true
 	@if ! [ -e "$(INITFS_DIR)"/etc/mdev.conf ]; then \
 		cat $(INITFS_DIR)/etc/mdev.conf.d/*.conf \
@@ -175,7 +143,6 @@ $(INITFS_DIRSTAMP):
 	fi
 	@touch $@
 
-#$(INITFS):	$(shell mkinitfs -F "$(INITFS_FEATURES)" -l $(KERNEL))
 $(INITFS): $(INITFS_DIRSTAMP) $(MODLOOP_DIRSTAMP)
 	@mkinitfs -F "$(INITFS_FEATURES)" -t $(INITFS_TMP) \
 		-b $(INITFS_DIR) -o $@ $(MODLOOP_KERNEL_RELEASE)
@@ -315,14 +282,21 @@ $(ISO_REPOS_DIRSTAMP): $(ISO_PKGDIR)/APKINDEX.tar.gz
 	@rm -f $(ISO_PKGDIR)/.SIGN.*
 	@touch $@
 
-$(ISO_PKGDIR)/APKINDEX.tar.gz: $(APK_FILES)
-	@echo "==> iso: generating repository index"
+$(ISO_PKGDIR)/APKINDEX.tar.gz: $(PROFILE).packages
+	@echo "==> iso: generating repository"
+	mkdir -p "$(ISO_PKGDIR)"
+	sed -e 's/\#.*//' $< \
+		| xargs apk fetch $(APK_OPTS) \
+			--output $(ISO_PKGDIR) \
+			--recursive
 	@apk index --description "$(ALPINE_NAME) $(ALPINE_RELEASE)" \
 		--rewrite-arch $(ALPINE_ARCH) -o $@ $(ISO_PKGDIR)/*.apk
 	@abuild-sign $@
 
+repo: $(ISO_PKGDIR)/APKINDEX.tar.gz
+
 $(ISO_KERNEL_STAMP): $(MODLOOP_DIRSTAMP)
-	@echo "==> iso: install kernel $(KERNEL)"
+	@echo "==> iso: install kernel $(KERNEL_PKGNAME)"
 	@mkdir -p $(dir $(ISO_KERNEL))
 	@echo "Fetching $(KERNEL_PKGNAME)"
 	@$(APK_FETCH_STDOUT) $(KERNEL_PKGNAME) \
