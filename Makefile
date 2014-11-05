@@ -43,14 +43,10 @@ KERNEL_APK	= $(call get_apk,$(KERNEL_PKGNAME))
 KERNEL		= $(word 3,$(subst -, ,$(notdir $(KERNEL_APK))))-$(word 2,$(subst -, ,$(notdir $(KERNEL_APK))))
 
 ALPINEBASELAYOUT_APK := $(call find_apk,alpine-baselayout)
-UCLIBC_APK	:= $(call get_apk,uclibc)
 BUSYBOX_APK	:= $(call get_apk,busybox)
 APK_TOOLS_APK	:= $(call get_apk,apk-tools)
 STRACE_APK	:= $(call get_apk,strace)
 
-APKS_FILTER	?= | grep -v -- '-dev$$' | grep -v 'sources'
-
-APKS		?= '*'
 APK_FILES	:= $(call get_apk,$(call expand_apk,$(APKS)))
 
 all: isofs
@@ -64,7 +60,6 @@ help:
 	@echo " 1. $(notdir $(KERNEL_APK)) (looks like $(KERNEL))"
 	@echo " 2. $(notdir $(MOD_APKS))"
 	@echo " 3. $(notdir $(ALPINEBASELAYOUT_APK))"
-	@echo " 4. $(notdir $(UCLIBC_APK))"
 	@echo " 5. $(notdir $(BUSYBOX_APK))"
 ifeq ($(APK_BIN),)
 	@echo " 6. $(notdir $(APK_TOOLS_APK))"
