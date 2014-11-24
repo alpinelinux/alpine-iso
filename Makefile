@@ -7,7 +7,7 @@ PROFILE		?= alpine
 BUILD_DATE	:= $(shell date +%y%m%d)
 ALPINE_RELEASE	?= $(BUILD_DATE)
 ALPINE_NAME	?= alpine-test
-ALPINE_ARCH	?= $(shell uname -m | sed 's/^i[0-9]/x/')
+ALPINE_ARCH	?= $(shell abuild -A)
 
 DESTDIR		?= $(shell pwd)/isotmp.$(PROFILE)
 
