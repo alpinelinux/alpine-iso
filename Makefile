@@ -59,7 +59,7 @@ $(APK_FILES):
 #
 # Modloop
 #
-MODLOOP		:= $(ISO_DIR)/boot/%.modloop.squashfs
+MODLOOP		:= $(ISO_DIR)/boot/modloop-%
 MODLOOP_DIR	= $(DESTDIR)/modloop.$*
 MODLOOP_KERNELSTAMP := $(DESTDIR)/stamp.modloop.kernel.%
 MODLOOP_DIRSTAMP := $(DESTDIR)/stamp.modloop.%
