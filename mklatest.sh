@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# create .latest.txt file for mirrors
-# usage:
+# create latest-releases.yaml file for mirrors
+
 arch=$(uname -m)
 case "$(uname -m)" in
 	i[0-9]86) arch=x86;;
@@ -14,7 +14,6 @@ else
 	branch=v${current%.*}
 fi
 releasedir="$branch/releases/$arch"
-target=.latest.txt
 
 do_stat() {
 	for f in *-$current-$arch.iso; do
@@ -49,7 +48,5 @@ do_yaml() {
 }
 
 do_stat || exit 1
-do_stat > $target
-
 do_yaml > latest-releases.yaml
 
