@@ -1,8 +1,10 @@
-bkeymaps
 alpine-base
 alpine-mirrors
-network-extras
+bkeymaps
+bonding
+bridge
+multipath-tools
 openssl
 tzdata
+vlan
 xen
-multipath-tools
