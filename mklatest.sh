@@ -30,15 +30,16 @@ do_stat() {
 
 do_yaml() {
 	echo "---"
-	do_stat | while read date time isopath size sha1 sha256; do
-		iso=${isopath##*/}
+	do_stat | while read date time filepath size sha1 sha256; do
+		file=${filepath##*/}
 		flavor=${iso%-${current}-${arch}.iso}
 		echo "-"
 		echo "  branch: $branch"
 		echo "  arch: $arch"
 		echo "  version: $current"
 		echo "  flavor: $flavor"
-		echo "  iso: $iso"
+		echo "  file: $file"
+		echo "  iso: $file"	# for compat
 		echo "  date: $date"
 		echo "  time: $time"
 		echo "  size: $size"
