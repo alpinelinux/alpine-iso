@@ -17,20 +17,21 @@ releasedir="$branch/releases/$arch"
 
 do_stat() {
 	for f in *-$current-$arch.iso; do
-		for hash in sha1 sha256; do
+		for hash in sha1 sha256 sha512; do
 			if ! [ -f "$f.$hash" ]; then
 				${hash}sum $f > $f.$hash
 			fi
 		done
 		sha1=$(awk '{print $1}' $f.sha1)
 		sha256=$(awk '{print $1}' $f.sha256)
-		stat -c "%y $releasedir/%n %s $sha1 $sha256" $f
+		sha512=$(awk '{print $1}' $f.sha512)
+		stat -c "%y $releasedir/%n %s $sha1 $sha256 $sha512" $f
 	done
 }
 
 do_yaml() {
 	echo "---"
-	do_stat | while read date time filepath size sha1 sha256; do
+	do_stat | while read date time filepath size sha1 sha256 sha512; do
 		file=${filepath##*/}
 		flavor=${iso%-${current}-${arch}.iso}
 		echo "-"
@@ -45,6 +46,7 @@ do_yaml() {
 		echo "  size: $size"
 		echo "  sha1: $sha1"
 		echo "  sha256: $sha256"
+		echo "  sha512: $sha512"
 	done
 }
 
