@@ -325,7 +325,7 @@ $(APKOVL_STAMP):
 	fi
 	@touch $@
 
-$(ISOFS_DIRSTAMP): $(ALL_MODLOOP) $(ALL_INITFS) $(ISOLINUX_CFG) $(ISOLINUX_BIN) $(ISOLINUX_C32) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTAMP) $(APKOVL_STAMP) $(SYSLINUX_CFG) $(APKOVL_DEST)
+$(ISOFS_DIRSTAMP): $(ALL_MODLOOP) $(ALL_INITFS) $(ISO_REPOS_DIRSTAMP) $(ISOLINUX_CFG) $(ISOLINUX_BIN) $(ISOLINUX_C32) $(ALL_ISO_KERNEL) $(APKOVL_STAMP) $(SYSLINUX_CFG) $(APKOVL_DEST)
 	@echo "$(ALPINE_NAME)-$(ALPINE_RELEASE) $(BUILD_DATE)" \
 		> $(ISO_DIR)/.alpine-release
 	@touch $@
@@ -388,6 +388,44 @@ $(xdelta): $(PREV_ISO) $(ISO)
 xdelta: $(xdelta)
 
 endif
+
+ifeq ($(ALPINE_ARCH),armhf)
+
+#
+# Raspberry Pi image
+#
+RPI_TAR_GZ      ?= $(ALPINE_NAME)-$(ALPINE_RELEASE)-$(ALPINE_ARCH).rpi.tar.gz
+
+RPI_FW_COMMIT	:= f56e48c00b30a985ed68306348fc493bf6050f6b
+RPI_URL		:= https://raw.githubusercontent.com/raspberrypi/firmware/$(RPI_FW_COMMIT)/boot/
+RPI_BOOT_FILES	:= bootcode.bin fixup.dat start.elf
+RPI_TEMP	:= $(DESTDIR)/tmp.rpi
+
+RPI_BLOBS_DIR	:= $(DESTDIR)/rpi.blobs
+RPI_BLOBS_STAMP	:= $(DESTDIR)/stamp.rpi.blobs
+
+$(RPI_BLOBS_STAMP):
+	@rm -rf $(RPI_BLOBS_DIR)
+	@mkdir -p $(RPI_BLOBS_DIR)
+	@cd $(RPI_BLOBS_DIR) ; curl -k --remote-name-all $(addprefix $(RPI_URL),$(RPI_BOOT_FILES)) && touch $(RPI_BLOBS_STAMP)
+
+$(RPI_TAR_GZ): $(ALL_MODLOOP) $(ALL_INITFS) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTAMP) $(RPI_BLOBS_STAMP)
+	@echo "== Generating $@"
+	@rm -rf $(RPI_TEMP)
+	@mkdir -p $(RPI_TEMP)
+	cp $(RPI_BLOBS_DIR)/* $(RPI_TEMP)/
+	cp $(ISO_DIR)/boot/vmlinuz-$(KERNEL_FLAVOR) $(RPI_TEMP)/
+	cp $(subst %,$(KERNEL_FLAVOR),$(INITFS)) $(RPI_TEMP)/
+	cp $(subst %,$(KERNEL_FLAVOR),$(MODLOOP)) $(RPI_TEMP)/
+	cp -r $(ISO_DIR)/apks $(RPI_TEMP)/
+	echo -e "BOOT_IMAGE=/vmlinuz-$(KERNEL_FLAVOR) alpine_dev=mmcblk0p1 quiet $(BOOT_OPTS)" > $(RPI_TEMP)/cmdline.txt
+	echo -en "kernel=vmlinuz-$(KERNEL_FLAVOR)\ninitramfs $(subst %,$(KERNEL_FLAVOR),$(INITFS_NAME)) 0x00a00000\n" > $(RPI_TEMP)/config.txt
+	tar czf $(RPI_TAR_GZ) -C "$(RPI_TEMP)" .
+
+rpi: $(RPI_TAR_GZ)
+
+endif
+
 #
 # USB image
 #
