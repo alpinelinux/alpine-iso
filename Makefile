@@ -419,7 +419,7 @@ $(RPI_TAR_GZ): $(ALL_MODLOOP) $(ALL_INITFS) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTA
 	cp $(subst %,$(KERNEL_FLAVOR),$(MODLOOP)) $(RPI_TEMP)/
 	cp -r $(ISO_DIR)/apks $(RPI_TEMP)/
 	echo -e "BOOT_IMAGE=/vmlinuz-$(KERNEL_FLAVOR) alpine_dev=mmcblk0p1 quiet $(BOOT_OPTS)" > $(RPI_TEMP)/cmdline.txt
-	echo -en "kernel=vmlinuz-$(KERNEL_FLAVOR)\ninitramfs $(subst %,$(KERNEL_FLAVOR),$(INITFS_NAME)) 0x00a00000\n" > $(RPI_TEMP)/config.txt
+	echo -en "disable_splash=1\nboot_delay=0\nkernel=vmlinuz-$(KERNEL_FLAVOR)\ninitramfs $(subst %,$(KERNEL_FLAVOR),$(INITFS_NAME)) 0x00a00000\n" > $(RPI_TEMP)/config.txt
 	tar czf $(RPI_TAR_GZ) -C "$(RPI_TEMP)" .
 
 rpi: $(RPI_TAR_GZ)
