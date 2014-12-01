@@ -348,15 +348,6 @@ isofs: $(ISOFS_DIRSTAMP)
 iso: $(ISO)
 
 #
-# SHA1 sum of ISO
-#
-SHA1	:= $(ISO).sha1
-SHA256	:= $(ISO).sha256
-SHA512	:= $(ISO).sha512
-
-$(SHA1) $(SHA256) $(SHA512): $(ISO)
-
-#
 # .pkgdiff
 #
 previous	:= $(shell cat previous 2>/dev/null)
@@ -381,6 +372,8 @@ $(xdelta): $(PREV_ISO) $(ISO)
 	@xdelta3 -f -e -s $(PREV_ISO) $(ISO) $@
 
 xdelta: $(xdelta)
+
+all-release: previous
 
 endif
 
@@ -417,7 +410,21 @@ $(RPI_TAR_GZ): $(ALL_MODLOOP) $(ALL_INITFS) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTA
 	echo -en "disable_splash=1\nboot_delay=0\nkernel=vmlinuz-$(KERNEL_FLAVOR)\ninitramfs $(subst %,$(KERNEL_FLAVOR),$(INITFS_NAME)) 0x00a00000\n" > $(RPI_TEMP)/config.txt
 	tar czf $(RPI_TAR_GZ) -C "$(RPI_TEMP)" .
 
-rpi: $(RPI_TAR_GZ)
+release_targets := $(RPI_TAR_GZ)
+SHA1	:= $(RPI_TAR_GZ).sha1
+SHA256	:= $(RPI_TAR_GZ).sha256
+SHA512	:= $(RPI_TAR_GZ).sha512
+
+$(SHA1) $(SHA256) $(SHA512): $(RPI_TAR_GZ)
+
+else
+
+release_targets := $(ISO) $(pkgdiff) $(xdelta)
+SHA1	:= $(ISO).sha1
+SHA256	:= $(ISO).sha256
+SHA512	:= $(ISO).sha512
+
+$(SHA1) $(SHA256) $(SHA512): $(ISO)
 
 endif
 
@@ -440,13 +447,18 @@ sha512: $(SHA512)
 # releases
 #
 
-release: $(CHECKSUMS) $(xdelta) $(pkgdiff)
+release_targets += $(CHECKSUMS)
+release: $(release_targets)
 
 
+ifeq ($(ALPINE_ARCH),armhf)
+profiles ?= alpine-rpi
+else
 ifeq ($(ALPINE_ARCH),x86_64)
 profiles ?= alpine alpine-mini alpine-vanilla alpine-xen
 else
 profiles ?= alpine alpine-mini alpine-vanilla
+endif
 endif
 
 
@@ -456,7 +468,7 @@ current:
 	@test -n "$(ALPINE_RELEASE)"
 	@echo $(ALPINE_RELEASE) > $@
 
-all-release: current previous $(addsuffix .conf.mk, $(profiles))
+all-release: current $(addsuffix .conf.mk, $(profiles))
 	@echo "*"
 	@echo "* Making $(current) releases"
 	@echo "*"
@@ -469,7 +481,7 @@ all-release: current previous $(addsuffix .conf.mk, $(profiles))
 			PROFILE=$$i release || break; \
 	done
 
-edge desktop mini xen vanilla: current
+edge desktop mini xen vanilla rpi: current
 	@fakeroot $(MAKE) ALPINE_RELEASE=$(current) PROFILE=alpine-$@ sha1
 
 .PRECIOUS: $(MODLOOP_KERNELSTAMP) $(MODLOOP_DIRSTAMP) $(INITFS_DIRSTAMP) $(INITFS) $(ISO_KERNEL_STAMP)
