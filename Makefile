@@ -350,16 +350,10 @@ iso: $(ISO)
 #
 # SHA1 sum of ISO
 #
-ISO_SHA1	:= $(ISO).sha1
-ISO_SHA256	:= $(ISO).sha256
+SHA1	:= $(ISO).sha1
+SHA256	:= $(ISO).sha256
 
-$(ISO_SHA1):	$(ISO)
-	@echo "==> Generating sha1 sum"
-	@sha1sum $(ISO) > $@ || rm -f $@
-
-$(ISO_SHA256):	$(ISO)
-	@echo "==> Generating sha256 sum"
-	@sha256sum $(ISO) > $@ || rm -f $@
+$(SHA1) $(SHA256): $(ISO)
 
 #
 # .pkgdiff
@@ -426,10 +420,25 @@ rpi: $(RPI_TAR_GZ)
 
 endif
 
-sha1: $(ISO_SHA1)
-sha256: $(ISO_SHA256)
+#
+# rules for generating checksum
+#
+target_filetype = $(subst .,,$(suffix $@))
 
-release: $(ISO_SHA1) $(ISO_SHA256) $(xdelta) $(pkgdiff)
+CHECKSUMS := $(SHA1) $(SHA256)
+$(CHECKSUMS):
+	@echo "==> $(target_filetype): Generating $@"
+	@$(target_filetype)sum $(basename $@) > $@.tmp \
+		&& mv $@.tmp $@
+
+sha1: $(SHA1)
+sha256: $(SHA256)
+
+#
+# releases
+#
+
+release: $(CHECKSUMS) $(xdelta) $(pkgdiff)
 
 
 ifeq ($(ALPINE_ARCH),x86_64)
@@ -462,3 +471,4 @@ edge desktop mini xen vanilla: current
 	@fakeroot $(MAKE) ALPINE_RELEASE=$(current) PROFILE=alpine-$@ sha1
 
 .PRECIOUS: $(MODLOOP_KERNELSTAMP) $(MODLOOP_DIRSTAMP) $(INITFS_DIRSTAMP) $(INITFS) $(ISO_KERNEL_STAMP)
+
