@@ -2,10 +2,7 @@
 
 # create latest-releases.yaml file for mirrors
 
-arch=$(uname -m)
-case "$(uname -m)" in
-	i[0-9]86) arch=x86;;
-esac
+arch=$(abuild -A)
 
 current=$(cat current) || exit 1
 if [ "${current%.*}" = "$current" ]; then
