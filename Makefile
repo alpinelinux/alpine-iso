@@ -288,7 +288,7 @@ $(ISO_PKGDIR)/APKINDEX.tar.gz: $(PROFILE).packages
 	sed -e 's/\#.*//' $< \
 		| xargs apk fetch $(APK_OPTS) \
 			--output $(ISO_PKGDIR) \
-			--recursive
+			--recursive || { rm $(ISO_PKGDIR)/*.apk; exit 1; }
 	@apk index --description "$(ALPINE_NAME) $(ALPINE_RELEASE)" \
 		--rewrite-arch $(ALPINE_ARCH) -o $@ $(ISO_PKGDIR)/*.apk
 	@abuild-sign $@
