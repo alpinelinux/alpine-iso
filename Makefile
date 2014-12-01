@@ -426,33 +426,6 @@ rpi: $(RPI_TAR_GZ)
 
 endif
 
-#
-# USB image
-#
-USBIMG		:= $(ALPINE_NAME)-$(ALPINE_RELEASE)-$(ALPINE_ARCH).img
-USBIMG_FREE	?= 8192
-USBIMG_SIZE	= $(shell echo $$(( `du -s $(ISO_DIR) | awk '{print $$1}'` + $(USBIMG_FREE) )) )
-MBRPATH		:= /usr/share/syslinux/mbr.bin
-
-$(USBIMG): $(ISOFS_DIRSTAMP)
-	@echo "==> Generating $@"
-	@mformat -C -v 'ALPINE' -c 16 -h 64 -n 32 -i $(USBIMG) \
-		-t $$(($(USBIMG_SIZE) / 1000)) ::
-	@syslinux $(USBIMG)
-	@mcopy -i $(USBIMG) $(ISO_DIR)/* $(ISO_DIR)/.[a-z]* ::
-	@mcopy -i $(USBIMG) /dev/zero ::/zero 2>/dev/null || true
-	@mdel -i $(USBIMG) ::/zero
-
-USBIMG_SHA1	:= $(USBIMG).sha1
-$(USBIMG_SHA1):	$(USBIMG)
-	@echo "==> Generating sha1 sum"
-	@sha1sum $(USBIMG) > $@ || rm -f $@
-
-$(ALPINE_NAME).img:	$(USBIMG)
-	@ln -sf $(USBIMG) $@
-
-img:	$(ALPINE_NAME).img
-
 sha1: $(ISO_SHA1)
 sha256: $(ISO_SHA256)
 
