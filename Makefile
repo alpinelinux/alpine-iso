@@ -352,8 +352,9 @@ iso: $(ISO)
 #
 SHA1	:= $(ISO).sha1
 SHA256	:= $(ISO).sha256
+SHA512	:= $(ISO).sha512
 
-$(SHA1) $(SHA256): $(ISO)
+$(SHA1) $(SHA256) $(SHA512): $(ISO)
 
 #
 # .pkgdiff
@@ -425,7 +426,7 @@ endif
 #
 target_filetype = $(subst .,,$(suffix $@))
 
-CHECKSUMS := $(SHA1) $(SHA256)
+CHECKSUMS := $(SHA1) $(SHA256) $(SHA512)
 $(CHECKSUMS):
 	@echo "==> $(target_filetype): Generating $@"
 	@$(target_filetype)sum $(basename $@) > $@.tmp \
@@ -433,6 +434,7 @@ $(CHECKSUMS):
 
 sha1: $(SHA1)
 sha256: $(SHA256)
+sha512: $(SHA512)
 
 #
 # releases
