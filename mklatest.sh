@@ -13,7 +13,10 @@ fi
 releasedir="$branch/releases/$arch"
 
 do_stat() {
-	for f in *-$current-$arch.iso; do
+	for f in *-$current-$arch.iso *-$current-$arch.*tar.gz; do
+		if ! [ -e "$f" ]; then
+			continue
+		fi
 		for hash in sha1 sha256 sha512; do
 			if ! [ -f "$f.$hash" ]; then
 				${hash}sum $f > $f.$hash
@@ -30,7 +33,7 @@ do_yaml() {
 	echo "---"
 	do_stat | while read date time filepath size sha1 sha256 sha512; do
 		file=${filepath##*/}
-		flavor=${iso%-${current}-${arch}.iso}
+		flavor=${file%-${current}-${arch}.*}
 		echo "-"
 		echo "  branch: $branch"
 		echo "  arch: $arch"
