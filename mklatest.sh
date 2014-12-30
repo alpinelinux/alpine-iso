@@ -51,5 +51,7 @@ do_yaml() {
 }
 
 do_stat || exit 1
+do_stat > .latest.txt
+
 do_yaml > latest-releases.yaml
 
