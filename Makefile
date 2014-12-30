@@ -226,6 +226,9 @@ $(ISOLINUX_BIN):
 		rm -f $@ && exit 1;\
 	fi
 
+# strip trailing -vanilla on kernel name
+VMLINUZ_NAME = $$(echo vmlinuz-$(1) | sed 's/-vanilla//')
+
 $(ISOLINUX_CFG):
 	@echo "==> iso: configure isolinux"
 	@mkdir -p $(dir $(ISOLINUX_BIN))
@@ -237,13 +240,13 @@ ifeq ($(PROFILE), alpine-xen)
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label xen-$$flavor"; \
 		echo "	kernel /$(ISOLINUX_DIR)/mboot.c32"; \
-		echo "	append /boot/xen.gz $(XEN_PARAMS) --- /boot/vmlinuz-$$flavor alpine_dev=cdrom:iso9660 modules=loop,squashfs,sd-mod,usb-storage,sr-mod $(BOOT_OPTS) --- /boot/initramfs-$$flavor"; \
+		echo "	append /boot/xen.gz $(XEN_PARAMS) --- /boot/$(call VMLINUZ_NAME,$$flavor) alpine_dev=cdrom:iso9660 modules=loop,squashfs,sd-mod,usb-storage,sr-mod $(BOOT_OPTS) --- /boot/initramfs-$$flavor"; \
 	done >>$@
 else
 	@echo "default $(KERNEL_FLAVOR_DEFAULT)" >>$@
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label $$flavor"; \
-		echo "	kernel /boot/vmlinuz-$$flavor"; \
+		echo "	kernel /boot/$(call VMLINUZ_NAME,$$flavor)";\
 		echo "	append initrd=/boot/initramfs-$$flavor alpine_dev=cdrom:iso9660 modules=loop,squashfs,sd-mod,usb-storage,sr-mod quiet $(BOOT_OPTS)"; \
 	done >>$@
 endif
@@ -258,13 +261,13 @@ ifeq ($(PROFILE), alpine-xen)
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label xen-$$flavor"; \
 		echo "	kernel /$(ISOLINUX_DIR)/mboot.c32"; \
-		echo "	append /boot/xen.gz $(XEN_PARAMS) --- /boot/vmlinuz-$$flavor alpine_dev=usbdisk:vfat modules=loop,squashfs,sd-mod,usb-storage $(BOOT_OPTS) --- /boot/initramfs-$$flavor"; \
+		echo "	append /boot/xen.gz $(XEN_PARAMS) --- /boot/$(call VMLINUZ_NAME,$$flavor) alpine_dev=usbdisk:vfat modules=loop,squashfs,sd-mod,usb-storage $(BOOT_OPTS) --- /boot/initramfs-$$flavor"; \
 	done >>$@
 else
 	@echo "default $(KERNEL_FLAVOR_DEFAULT)" >>$@
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label $$flavor"; \
-		echo "	kernel /boot/vmlinuz-$$flavor"; \
+		echo "	kernel /boot/$(call VMLINUZ_NAME,$$flavor)";\
 		echo "	append initrd=/boot/initramfs-$$flavor alpine_dev=usbdisk:vfat modules=loop,squashfs,sd-mod,usb-storage quiet $(BOOT_OPTS)"; \
 	done >>$@
 endif
