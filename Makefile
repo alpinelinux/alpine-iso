@@ -195,6 +195,7 @@ $(ISO_DIR)/xen.apkovl.tar.gz:
 	$(call rc_add,xenconsoled,default)
 	@cd $(APKOVL_DIR) && $(TAR) -zcf $@ *
 	@echo "==> apkovl: built $@"
+
 #
 # ISO rules
 #
@@ -207,7 +208,8 @@ ISOLINUX_C32	:= $(ISOLINUX)/ldlinux.c32 $(ISOLINUX)/libutil.c32 \
 ISOLINUX_CFG	:= $(ISOLINUX)/isolinux.cfg
 SYSLINUX_CFG	:= $(ISOLINUX)/syslinux.cfg
 SYSLINUX_SERIAL	?=
-
+SYSLINUX_TIMEOUT ?= 20
+SYSLINUX_PROMPT ?= 1
 
 
 $(ISOLINUX_C32):
@@ -233,8 +235,8 @@ $(ISOLINUX_CFG):
 	@echo "==> iso: configure isolinux"
 	@mkdir -p $(dir $(ISOLINUX_BIN))
 	@echo "$(SYSLINUX_SERIAL)" >$@
-	@echo "timeout 20" >>$@
-	@echo "prompt 1" >>$@
+	@echo "timeout $(SYSLINUX_TIMEOUT)" >>$@
+	@echo "prompt $(SYSLINUX_PROMPT)" >>$@
 ifeq ($(PROFILE), alpine-xen)
 	@echo "default xen-$(KERNEL_FLAVOR_DEFAULT)" >>$@
 	@for flavor in $(KERNEL_FLAVOR); do \
