@@ -30,7 +30,8 @@ APK_FETCH_STDOUT := apk fetch $(APK_OPTS) --stdout --quiet
 
 KERNEL_FLAVOR_DEFAULT	?= grsec
 KERNEL_FLAVOR	?= $(KERNEL_FLAVOR_DEFAULT)
-KERNEL_PKGNAME	= linux-$*
+CUR_KERNEL_FLAVOR	= $*
+CUR_KERNEL_PKGNAME	= linux-$*
 
 all: isofs
 
@@ -42,7 +43,6 @@ help:
 	@echo "ALPINE_NAME:    $(ALPINE_NAME)"
 	@echo "ALPINE_RELEASE: $(ALPINE_RELEASE)"
 	@echo "KERNEL_FLAVOR:  $(KERNEL_FLAVOR)"
-	@echo "KERNEL_PKGNAME: $(KERNEL_PKGNAME)"
 	@echo "APKOVL:         $(APKOVL)"
 	@echo
 
@@ -65,7 +65,10 @@ MODLOOP_KERNELSTAMP := $(DESTDIR)/stamp.modloop.kernel.%
 MODLOOP_DIRSTAMP := $(DESTDIR)/stamp.modloop.%
 MODLOOP_EXTRA	?= $(addsuffix -$*, dahdi-linux xtables-addons)
 MODLOOP_FIRMWARE ?= linux-firmware dahdi-linux
-MODLOOP_PKGS	= $(KERNEL_PKGNAME) $(MODLOOP_EXTRA) $(MODLOOP_FIRMWARE)
+MODLOOP_PKGS	= $(CUR_KERNEL_PKGNAME) $(MODLOOP_EXTRA) $(MODLOOP_FIRMWARE)
+ifeq ($(ALPINE_NAME),alpine-uboot)
+UBOOT_PKGS = u-boot
+endif
 
 modloop-%: $(MODLOOP)
 	@:
@@ -77,22 +80,23 @@ modloop: $(ALL_MODLOOP)
 
 $(MODLOOP_KERNELSTAMP):
 	@echo "==> modloop: Unpacking kernel modules";
-	@rm -rf $(MODLOOP_DIR) && mkdir -p $(MODLOOP_DIR)
+	@rm -rf $(MODLOOP_DIR) && mkdir -p $(MODLOOP_DIR)/tmp $(MODLOOP_DIR)/lib/modules
 	@apk add $(APK_OPTS) \
 		--initdb \
 		--update \
 		--no-script \
-		--root $(MODLOOP_DIR) \
-		$(MODLOOP_PKGS)
-	@if [ -d "$(MODLOOP_DIR)"/lib/firmware ]; then \
-		mv "$(MODLOOP_DIR)"/lib/firmware "$(MODLOOP_DIR)"/lib/modules/;\
+		--root $(MODLOOP_DIR)/tmp \
+		$(MODLOOP_PKGS) $(UBOOT_PKGS)
+	@mv "$(MODLOOP_DIR)"/tmp/lib/modules/* "$(MODLOOP_DIR)"/lib/modules/
+	@if [ -d "$(MODLOOP_DIR)"/tmp/lib/firmware ]; then \
+		mv "$(MODLOOP_DIR)"/tmp/lib/firmware "$(MODLOOP_DIR)"/lib/modules/;\
 	fi
-	@cp $(MODLOOP_DIR)/usr/share/kernel/$*/kernel.release $@
+	@cp $(MODLOOP_DIR)/tmp/usr/share/kernel/$*/kernel.release $@
 
 MODLOOP_KERNEL_RELEASE = $(shell cat $(subst %,$*,$(MODLOOP_KERNELSTAMP)))
 
 $(MODLOOP_DIRSTAMP): $(MODLOOP_KERNELSTAMP)
-	@rm -rf $(addprefix $(MODLOOP_DIR)/lib/modules/*/, source build)
+	@rm -rf $(addprefix $(MODLOOP_DIR)/modules/*/, source build)
 	@depmod $(MODLOOP_KERNEL_RELEASE) -b $(MODLOOP_DIR)
 	@touch $@
 
@@ -301,10 +305,10 @@ $(ISO_PKGDIR)/APKINDEX.tar.gz: $(PROFILE).packages
 repo: $(ISO_PKGDIR)/APKINDEX.tar.gz
 
 $(ISO_KERNEL_STAMP): $(MODLOOP_DIRSTAMP)
-	@echo "==> iso: install kernel $(KERNEL_PKGNAME)"
+	@echo "==> iso: install kernel $(CUR_KERNEL_PKGNAME)"
 	@mkdir -p $(dir $(ISO_KERNEL))
-	@echo "Fetching $(KERNEL_PKGNAME)"
-	@$(APK_FETCH_STDOUT) $(KERNEL_PKGNAME) \
+	@echo "Fetching $(CUR_KERNEL_PKGNAME)"
+	@$(APK_FETCH_STDOUT) $(CUR_KERNEL_PKGNAME) \
 		| $(TAR) -C $(ISO_DIR) -xz boot
 ifeq ($(PROFILE), alpine-xen)
 	@echo "Fetching xen-hypervisor"
@@ -312,10 +316,10 @@ ifeq ($(PROFILE), alpine-xen)
 		| $(TAR) -C $(ISO_DIR) -xz boot
 endif
 	@rm -f $(ISO_KERNEL)
-	@if [ "$(KERNEL_FLAVOR)" = "vanilla" ]; then \
+	@if [ "$(CUR_KERNEL_FLAVOR)" = "vanilla" ]; then \
 		ln -s vmlinuz $(ISO_KERNEL);\
 	else \
-		ln -s vmlinuz-$(KERNEL_FLAVOR) $(ISO_KERNEL);\
+		ln -s vmlinuz-$(CUR_KERNEL_FLAVOR) $(ISO_KERNEL);\
 	fi
 	@rm -rf $(ISO_DIR)/.[A-Z]* $(ISO_DIR)/.[a-z]* $(ISO_DIR)/lib
 	@touch $@
@@ -382,14 +386,55 @@ all-release: previous
 
 endif
 
-ifeq ($(ALPINE_ARCH),armhf)
+ifeq ($(ALPINE_NAME),alpine-uboot)
+
+#
+# U-Boot image
+#
+
+UBOOT_TAR_GZ	?= $(ALPINE_NAME)-$(ALPINE_RELEASE)-$(ALPINE_ARCH).tar.gz
+UBOOT_TEMP	:= $(DESTDIR)/tmp.uboot
+UBOOT_CFG	:= $(UBOOT_TEMP)/extlinux/extlinux.conf
+
+$(UBOOT_TAR_GZ): $(ALL_MODLOOP) $(ALL_INITFS) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTAMP)
+	@echo "== Generating $@"
+	@rm -rf $(UBOOT_TEMP)
+	@mkdir -p $(UBOOT_TEMP) $(UBOOT_TEMP)/boot/dtbs $(dir $(UBOOT_CFG))
+
+	@echo "LABEL grsec" > $(UBOOT_CFG)
+	@echo "  MENU DEFAULT" >> $(UBOOT_CFG)
+	@echo "  MENU LABEL Linux grsec" >> $(UBOOT_CFG)
+	@echo "  LINUX /boot/vmlinuz-grsec" >> $(UBOOT_CFG)
+	@echo "  INITRD /boot/initramfs-grsec" >> $(UBOOT_CFG)
+	@echo "  DEVICETREEDIR /boot/dtbs" >> $(UBOOT_CFG)
+	@echo "  APPEND BOOT_IMAGE=/boot/vmlinuz-grsec modules=loop,squashfs,sd-mod,usb-storage alpine_dev=mmcblk0p1:vfat console=\$${console}" >> $(UBOOT_CFG)
+
+	for flavor in $(KERNEL_FLAVOR); do \
+		cp $(ISO_DIR)/boot/vmlinuz-$$flavor $(UBOOT_TEMP)/boot ; \
+		cp $(subst %,$$flavor,$(INITFS)) $(UBOOT_TEMP)/boot ; \
+		cp $(subst %,$$flavor,$(MODLOOP)) $(UBOOT_TEMP)/boot ; \
+	done
+	cp -r $(ISO_DIR)/apks $(UBOOT_TEMP)/
+	cp -a $(DESTDIR)/modloop.*/tmp/usr/lib/linux-*-grsec/*.dtb $(UBOOT_TEMP)/boot/dtbs
+	cp -a $(DESTDIR)/modloop.*/tmp/usr/share/u-boot $(UBOOT_TEMP)/
+	tar czf $(UBOOT_TAR_GZ) -C "$(UBOOT_TEMP)" .
+
+
+release_targets := $(UBOOT_TAR_GZ)
+SHA1	:= $(UBOOT_TAR_GZ).sha1
+SHA256	:= $(UBOOT_TAR_GZ).sha256
+SHA512	:= $(UBOOT_TAR_GZ).sha512
+
+$(SHA1) $(SHA256) $(SHA512): $(UBOOT_TAR_GZ)
+
+else ifeq ($(ALPINE_NAME),alpine-rpi)
 
 #
 # Raspberry Pi image
 #
 RPI_TAR_GZ      ?= $(ALPINE_NAME)-$(ALPINE_RELEASE)-$(ALPINE_ARCH).rpi.tar.gz
 
-RPI_FW_COMMIT	:= f56e48c00b30a985ed68306348fc493bf6050f6b
+RPI_FW_COMMIT	:= 25b436de03dd15d199efeaa2b303d728422b4748
 RPI_URL		:= https://raw.githubusercontent.com/raspberrypi/firmware/$(RPI_FW_COMMIT)/boot/
 RPI_BOOT_FILES	:= bootcode.bin fixup.dat start.elf
 RPI_TEMP	:= $(DESTDIR)/tmp.rpi
@@ -405,14 +450,21 @@ $(RPI_BLOBS_STAMP):
 $(RPI_TAR_GZ): $(ALL_MODLOOP) $(ALL_INITFS) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTAMP) $(RPI_BLOBS_STAMP)
 	@echo "== Generating $@"
 	@rm -rf $(RPI_TEMP)
-	@mkdir -p $(RPI_TEMP)
+	@mkdir -p $(RPI_TEMP) $(RPI_TEMP)/boot
 	cp $(RPI_BLOBS_DIR)/* $(RPI_TEMP)/
-	cp $(ISO_DIR)/boot/vmlinuz-$(KERNEL_FLAVOR) $(RPI_TEMP)/
-	cp $(subst %,$(KERNEL_FLAVOR),$(INITFS)) $(RPI_TEMP)/
-	cp $(subst %,$(KERNEL_FLAVOR),$(MODLOOP)) $(RPI_TEMP)/
+	for flavor in $(KERNEL_FLAVOR); do \
+		cp $(ISO_DIR)/boot/vmlinuz-$$flavor $(RPI_TEMP)/boot/ ; \
+		cp $(subst %,$$flavor,$(INITFS)) $(RPI_TEMP)/boot ; \
+		cp $(subst %,$$flavor,$(MODLOOP)) $(RPI_TEMP)/boot/ ; \
+		echo "BOOT_IMAGE=/boot/vmlinuz-$$flavor modules=loop,squashfs,sd-mod,usb-storage alpine_dev=mmcblk0p1 quiet $(BOOT_OPTS)" > $(RPI_TEMP)/cmdline-$$flavor.txt ; \
+	done
+	echo -en "disable_splash=1\nboot_delay=0\ndevice_tree_address=0x100\nkernel_address=0x8000\n" > $(RPI_TEMP)/config.txt
+	echo -en "[pi1]\ncmdline=cmdline-rpi.txt\nkernel=boot/vmlinuz-rpi\ninitramfs boot/initramfs-rpi 0x01000000\n" >> $(RPI_TEMP)/config.txt
+	echo -en "[pi2]\ncmdline=cmdline-rpi2.txt\nkernel=boot/vmlinuz-rpi2\ninitramfs boot/initramfs-rpi2 0x01000000\n" >> $(RPI_TEMP)/config.txt
+	echo -en "[all\n" >> $(RPI_TEMP)/config.txt
 	cp -r $(ISO_DIR)/apks $(RPI_TEMP)/
-	echo -e "BOOT_IMAGE=/vmlinuz-$(KERNEL_FLAVOR) alpine_dev=mmcblk0p1 quiet $(BOOT_OPTS)" > $(RPI_TEMP)/cmdline.txt
-	echo -en "disable_splash=1\nboot_delay=0\nkernel=vmlinuz-$(KERNEL_FLAVOR)\ninitramfs $(subst %,$(KERNEL_FLAVOR),$(INITFS_NAME)) 0x00a00000\n" > $(RPI_TEMP)/config.txt
+	cp -a $(DESTDIR)/modloop.*/tmp/usr/lib/linux-*-rpi*/*.dtb $(RPI_TEMP)/
+	cp -a $(DESTDIR)/modloop.*/tmp/usr/lib/linux-*-rpi*/overlays $(RPI_TEMP)/
 	tar czf $(RPI_TAR_GZ) -C "$(RPI_TEMP)" .
 
 release_targets := $(RPI_TAR_GZ)
@@ -457,7 +509,7 @@ release: $(release_targets)
 
 
 ifeq ($(ALPINE_ARCH),armhf)
-profiles ?= alpine-rpi
+profiles ?= alpine-rpi alpine-uboot
 else
 ifeq ($(ALPINE_ARCH),x86_64)
 profiles ?= alpine alpine-mini alpine-vanilla alpine-xen
@@ -486,7 +538,7 @@ all-release: current $(addsuffix .conf.mk, $(profiles))
 			PROFILE=$$i release || break; \
 	done
 
-edge desktop mini xen vanilla rpi: current
+edge desktop mini xen vanilla rpi uboot: current
 	@fakeroot $(MAKE) ALPINE_RELEASE=$(current) PROFILE=alpine-$@ sha1
 
 .PRECIOUS: $(MODLOOP_KERNELSTAMP) $(MODLOOP_DIRSTAMP) $(INITFS_DIRSTAMP) $(INITFS) $(ISO_KERNEL_STAMP)
