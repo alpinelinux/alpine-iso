@@ -461,7 +461,8 @@ $(RPI_TAR_GZ): $(ALL_MODLOOP) $(ALL_INITFS) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTA
 	echo -en "disable_splash=1\nboot_delay=0\ndevice_tree_address=0x100\nkernel_address=0x8000\n" > $(RPI_TEMP)/config.txt
 	echo -en "[pi1]\ncmdline=cmdline-rpi.txt\nkernel=boot/vmlinuz-rpi\ninitramfs boot/initramfs-rpi 0x01000000\n" >> $(RPI_TEMP)/config.txt
 	echo -en "[pi2]\ncmdline=cmdline-rpi2.txt\nkernel=boot/vmlinuz-rpi2\ninitramfs boot/initramfs-rpi2 0x01000000\n" >> $(RPI_TEMP)/config.txt
-	echo -en "[all\n" >> $(RPI_TEMP)/config.txt
+	echo -en "[all]\n" >> $(RPI_TEMP)/config.txt
+	echo -en "include usercfg.txt\n" >> $(RPI_TEMP)/config.txt
 	cp -r $(ISO_DIR)/apks $(RPI_TEMP)/
 	cp -a $(DESTDIR)/modloop.*/tmp/usr/lib/linux-*-rpi*/*.dtb $(RPI_TEMP)/
 	cp -a $(DESTDIR)/modloop.*/tmp/usr/lib/linux-*-rpi*/overlays $(RPI_TEMP)/
