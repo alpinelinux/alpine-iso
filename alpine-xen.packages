@@ -3,8 +3,14 @@ alpine-mirrors
 bkeymaps
 bonding
 bridge
+e2fsprogs
+ethtool
+lvm2
+mdadm
 multipath-tools
 openssl
+openvswitch
+sfdisk
 tzdata
 vlan
 xen
