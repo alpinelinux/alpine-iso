@@ -477,7 +477,7 @@ $(SHA1) $(SHA256) $(SHA512): $(RPI_TAR_GZ)
 
 else
 
-release_targets := $(ISO) $(pkgdiff) $(xdelta)
+release_targets := $(ISO) $(pkgdiff)
 SHA1	:= $(ISO).sha1
 SHA256	:= $(ISO).sha256
 SHA512	:= $(ISO).sha512
