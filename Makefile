@@ -434,7 +434,7 @@ else ifeq ($(ALPINE_NAME),alpine-rpi)
 #
 RPI_TAR_GZ      ?= $(ALPINE_NAME)-$(ALPINE_RELEASE)-$(ALPINE_ARCH).rpi.tar.gz
 
-RPI_FW_COMMIT	:= 25b436de03dd15d199efeaa2b303d728422b4748
+RPI_FW_COMMIT	:= b06b317afb60547b436cd30e056b54cec7ae3b8e
 RPI_URL		:= https://raw.githubusercontent.com/raspberrypi/firmware/$(RPI_FW_COMMIT)/boot/
 RPI_BOOT_FILES	:= bootcode.bin fixup.dat start.elf
 RPI_TEMP	:= $(DESTDIR)/tmp.rpi
@@ -458,9 +458,9 @@ $(RPI_TAR_GZ): $(ALL_MODLOOP) $(ALL_INITFS) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTA
 		cp $(subst %,$$flavor,$(MODLOOP)) $(RPI_TEMP)/boot/ ; \
 		echo "BOOT_IMAGE=/boot/vmlinuz-$$flavor modules=loop,squashfs,sd-mod,usb-storage alpine_dev=mmcblk0p1 quiet $(BOOT_OPTS)" > $(RPI_TEMP)/cmdline-$$flavor.txt ; \
 	done
-	echo -en "disable_splash=1\nboot_delay=0\ndevice_tree_address=0x100\nkernel_address=0x8000\n" > $(RPI_TEMP)/config.txt
-	echo -en "[pi1]\ncmdline=cmdline-rpi.txt\nkernel=boot/vmlinuz-rpi\ninitramfs boot/initramfs-rpi 0x01000000\n" >> $(RPI_TEMP)/config.txt
-	echo -en "[pi2]\ncmdline=cmdline-rpi2.txt\nkernel=boot/vmlinuz-rpi2\ninitramfs boot/initramfs-rpi2 0x01000000\n" >> $(RPI_TEMP)/config.txt
+	echo -en "disable_splash=1\nboot_delay=0\n" > $(RPI_TEMP)/config.txt
+	echo -en "[pi1]\ncmdline=cmdline-rpi.txt\nkernel=boot/vmlinuz-rpi\ninitramfs boot/initramfs-rpi 0x08000000\n" >> $(RPI_TEMP)/config.txt
+	echo -en "[pi2]\ncmdline=cmdline-rpi2.txt\nkernel=boot/vmlinuz-rpi2\ninitramfs boot/initramfs-rpi2 0x08000000\n" >> $(RPI_TEMP)/config.txt
 	echo -en "[all]\n" >> $(RPI_TEMP)/config.txt
 	echo -en "include usercfg.txt\n" >> $(RPI_TEMP)/config.txt
 	cp -r $(ISO_DIR)/apks $(RPI_TEMP)/
