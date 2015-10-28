@@ -89,7 +89,12 @@ $(MODLOOP_KERNELSTAMP):
 		$(MODLOOP_PKGS) $(UBOOT_PKGS)
 	@mv "$(MODLOOP_DIR)"/tmp/lib/modules/* "$(MODLOOP_DIR)"/lib/modules/
 	@if [ -d "$(MODLOOP_DIR)"/tmp/lib/firmware ]; then \
-		mv "$(MODLOOP_DIR)"/tmp/lib/firmware "$(MODLOOP_DIR)"/lib/modules/;\
+		mkdir -p "$(MODLOOP_DIR)"/lib/firmware/; \
+		find "$(MODLOOP_DIR)"/lib/modules -type f -name "*.ko" | xargs modinfo -F firmware | sort -u | while read FW; do \
+			if [ -e "$(MODLOOP_DIR)/tmp/lib/firmware/$${FW}" ]; then \
+				install -pD "$(MODLOOP_DIR)/tmp/lib/firmware/$${FW}" "$(MODLOOP_DIR)/lib/firmware/$${FW}"; \
+			fi \
+		done \
 	fi
 	@cp $(MODLOOP_DIR)/tmp/usr/share/kernel/$*/kernel.release $@
 
