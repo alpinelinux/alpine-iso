@@ -126,7 +126,7 @@ INITFS		:= $(ISO_DIR)/boot/$(INITFS_NAME)
 INITFS_DIR	= $(DESTDIR)/initfs.$*
 INITFS_TMP	= $(DESTDIR)/tmp.initfs.$*
 INITFS_DIRSTAMP := $(DESTDIR)/stamp.initfs.%
-INITFS_FEATURES	?= ata base bootchart cdrom squashfs ext2 ext3 ext4 floppy mmc raid scsi usb virtio
+INITFS_FEATURES	?= ata base bootchart cdrom squashfs ext2 ext3 ext4 mmc raid scsi usb virtio
 INITFS_PKGS	= $(MODLOOP_PKGS) alpine-base acct
 
 initfs-%: $(INITFS)
