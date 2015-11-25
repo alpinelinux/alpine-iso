@@ -518,9 +518,9 @@ ifeq ($(ALPINE_ARCH),armhf)
 profiles ?= alpine-rpi alpine-uboot
 else
 ifeq ($(ALPINE_ARCH),x86_64)
-profiles ?= alpine alpine-mini alpine-vanilla alpine-xen
+profiles ?= alpine alpine-extended alpine-vanilla alpine-xen
 else
-profiles ?= alpine alpine-mini alpine-vanilla
+profiles ?= alpine alpine-extended alpine-vanilla
 endif
 endif
 
