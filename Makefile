@@ -251,14 +251,14 @@ ifeq ($(PROFILE), alpine-xen)
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label xen-$$flavor"; \
 		echo "	kernel /$(ISOLINUX_DIR)/mboot.c32"; \
-		echo "	append /boot/xen.gz $(XEN_PARAMS) --- /boot/$(call VMLINUZ_NAME,$$flavor) alpine_dev=cdrom:iso9660 modules=loop,squashfs,sd-mod,usb-storage,sr-mod $(BOOT_OPTS) --- /boot/initramfs-$$flavor"; \
+		echo "	append /boot/xen.gz $(XEN_PARAMS) --- /boot/$(call VMLINUZ_NAME,$$flavor) modloop=/boot/modloop-$$flavor modules=loop,squashfs,sd-mod,usb-storage,sr-mod $(BOOT_OPTS) --- /boot/initramfs-$$flavor"; \
 	done >>$@
 else
 	@echo "default $(KERNEL_FLAVOR_DEFAULT)" >>$@
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label $$flavor"; \
 		echo "	kernel /boot/$(call VMLINUZ_NAME,$$flavor)";\
-		echo "	append initrd=/boot/initramfs-$$flavor alpine_dev=cdrom:iso9660 modules=loop,squashfs,sd-mod,usb-storage,sr-mod quiet $(BOOT_OPTS)"; \
+		echo "	append initrd=/boot/initramfs-$$flavor modloop=/boot/modloop-$$flavor modules=loop,squashfs,sd-mod,usb-storage,sr-mod quiet $(BOOT_OPTS)"; \
 	done >>$@
 endif
 
@@ -272,14 +272,14 @@ ifeq ($(PROFILE), alpine-xen)
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label xen-$$flavor"; \
 		echo "	kernel /$(ISOLINUX_DIR)/mboot.c32"; \
-		echo "	append /boot/xen.gz $(XEN_PARAMS) --- /boot/$(call VMLINUZ_NAME,$$flavor) alpine_dev=usbdisk:vfat modules=loop,squashfs,sd-mod,usb-storage $(BOOT_OPTS) --- /boot/initramfs-$$flavor"; \
+		echo "	append /boot/xen.gz $(XEN_PARAMS) --- /boot/$(call VMLINUZ_NAME,$$flavor) modloop=/boot/modloop-$$flavor modules=loop,squashfs,sd-mod,usb-storage $(BOOT_OPTS) --- /boot/initramfs-$$flavor"; \
 	done >>$@
 else
 	@echo "default $(KERNEL_FLAVOR_DEFAULT)" >>$@
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label $$flavor"; \
 		echo "	kernel /boot/$(call VMLINUZ_NAME,$$flavor)";\
-		echo "	append initrd=/boot/initramfs-$$flavor alpine_dev=usbdisk:vfat modules=loop,squashfs,sd-mod,usb-storage quiet $(BOOT_OPTS)"; \
+		echo "	append initrd=/boot/initramfs-$$flavor modloop-$$flavor modules=loop,squashfs,sd-mod,usb-storage quiet $(BOOT_OPTS)"; \
 	done >>$@
 endif
 
@@ -412,7 +412,7 @@ $(UBOOT_TAR_GZ): $(ALL_MODLOOP) $(ALL_INITFS) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRS
 	@echo "  LINUX /boot/vmlinuz-grsec" >> $(UBOOT_CFG)
 	@echo "  INITRD /boot/initramfs-grsec" >> $(UBOOT_CFG)
 	@echo "  DEVICETREEDIR /boot/dtbs" >> $(UBOOT_CFG)
-	@echo "  APPEND BOOT_IMAGE=/boot/vmlinuz-grsec modules=loop,squashfs,sd-mod,usb-storage alpine_dev=mmcblk0p1:vfat console=\$${console}" >> $(UBOOT_CFG)
+	@echo "  APPEND BOOT_IMAGE=/boot/vmlinuz-grsec modules=loop,squashfs,sd-mod,usb-storage modloop=/boot/modloop-grsec console=\$${console}" >> $(UBOOT_CFG)
 
 	for flavor in $(KERNEL_FLAVOR); do \
 		cp $(ISO_DIR)/boot/vmlinuz-$$flavor $(UBOOT_TEMP)/boot ; \
@@ -461,7 +461,7 @@ $(RPI_TAR_GZ): $(ALL_MODLOOP) $(ALL_INITFS) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTA
 		cp $(ISO_DIR)/boot/vmlinuz-$$flavor $(RPI_TEMP)/boot/ ; \
 		cp $(subst %,$$flavor,$(INITFS)) $(RPI_TEMP)/boot ; \
 		cp $(subst %,$$flavor,$(MODLOOP)) $(RPI_TEMP)/boot/ ; \
-		echo "BOOT_IMAGE=/boot/vmlinuz-$$flavor modules=loop,squashfs,sd-mod,usb-storage alpine_dev=mmcblk0p1 quiet $(BOOT_OPTS)" > $(RPI_TEMP)/cmdline-$$flavor.txt ; \
+		echo "BOOT_IMAGE=/boot/vmlinuz-$$flavor modules=loop,squashfs,sd-mod,usb-storage modloop=/boot/modloop-$$flavor quiet $(BOOT_OPTS)" > $(RPI_TEMP)/cmdline-$$flavor.txt ; \
 	done
 	echo -en "disable_splash=1\nboot_delay=0\n" > $(RPI_TEMP)/config.txt
 	echo -en "[pi1]\ncmdline=cmdline-rpi.txt\nkernel=boot/vmlinuz-rpi\ninitramfs boot/initramfs-rpi 0x08000000\n" >> $(RPI_TEMP)/config.txt
