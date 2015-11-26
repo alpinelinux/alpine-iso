@@ -214,7 +214,6 @@ ISOLINUX	:= $(ISO_DIR)/$(ISOLINUX_DIR)
 ISOLINUX_BIN	:= $(ISOLINUX)/isolinux.bin
 ISOLINUX_C32	:= $(ISOLINUX)/ldlinux.c32 $(ISOLINUX)/libutil.c32 \
 			$(ISOLINUX)/libcom32.c32 $(ISOLINUX)/mboot.c32
-ISOLINUX_CFG	:= $(ISOLINUX)/isolinux.cfg
 SYSLINUX_CFG	:= $(ISOLINUX)/syslinux.cfg
 SYSLINUX_SERIAL	?=
 SYSLINUX_TIMEOUT ?= 20
@@ -240,28 +239,6 @@ $(ISOLINUX_BIN):
 # strip trailing -vanilla on kernel name
 VMLINUZ_NAME = $$(echo vmlinuz-$(1) | sed 's/-vanilla//')
 
-$(ISOLINUX_CFG):
-	@echo "==> iso: configure isolinux"
-	@mkdir -p $(dir $(ISOLINUX_BIN))
-	@echo "$(SYSLINUX_SERIAL)" >$@
-	@echo "timeout $(SYSLINUX_TIMEOUT)" >>$@
-	@echo "prompt $(SYSLINUX_PROMPT)" >>$@
-ifeq ($(PROFILE), alpine-xen)
-	@echo "default xen-$(KERNEL_FLAVOR_DEFAULT)" >>$@
-	@for flavor in $(KERNEL_FLAVOR); do \
-		echo "label xen-$$flavor"; \
-		echo "	kernel /$(ISOLINUX_DIR)/mboot.c32"; \
-		echo "	append /boot/xen.gz $(XEN_PARAMS) --- /boot/$(call VMLINUZ_NAME,$$flavor) modloop=/boot/modloop-$$flavor modules=loop,squashfs,sd-mod,usb-storage,sr-mod $(BOOT_OPTS) --- /boot/initramfs-$$flavor"; \
-	done >>$@
-else
-	@echo "default $(KERNEL_FLAVOR_DEFAULT)" >>$@
-	@for flavor in $(KERNEL_FLAVOR); do \
-		echo "label $$flavor"; \
-		echo "	kernel /boot/$(call VMLINUZ_NAME,$$flavor)";\
-		echo "	append initrd=/boot/initramfs-$$flavor modloop=/boot/modloop-$$flavor modules=loop,squashfs,sd-mod,usb-storage,sr-mod quiet $(BOOT_OPTS)"; \
-	done >>$@
-endif
-
 $(SYSLINUX_CFG): $(ALL_MODLOOP_DIRSTAMP)
 	@echo "==> iso: configure syslinux"
 	@echo "$(SYSLINUX_SERIAL)" >$@
@@ -284,7 +261,7 @@ else
 endif
 
 clean-syslinux:
-	@rm -f $(SYSLINUX_CFG) $(ISOLINUX_CFG) $(ISOLINUX_BIN)
+	@rm -f $(SYSLINUX_CFG) $(ISOLINUX_BIN)
 
 ISO_KERNEL_STAMP	:= $(DESTDIR)/stamp.kernel.%
 ISO_KERNEL	= $(ISO_DIR)/boot/$*
@@ -339,7 +316,7 @@ $(APKOVL_STAMP):
 	fi
 	@touch $@
 
-$(ISOFS_DIRSTAMP): $(ALL_MODLOOP) $(ALL_INITFS) $(ISO_REPOS_DIRSTAMP) $(ISOLINUX_CFG) $(ISOLINUX_BIN) $(ISOLINUX_C32) $(ALL_ISO_KERNEL) $(APKOVL_STAMP) $(SYSLINUX_CFG) $(APKOVL_DEST)
+$(ISOFS_DIRSTAMP): $(ALL_MODLOOP) $(ALL_INITFS) $(ISO_REPOS_DIRSTAMP) $(ISOLINUX_BIN) $(ISOLINUX_C32) $(ALL_ISO_KERNEL) $(APKOVL_STAMP) $(SYSLINUX_CFG) $(APKOVL_DEST)
 	@echo "$(ALPINE_NAME)-$(ALPINE_RELEASE) $(BUILD_DATE)" \
 		> $(ISO_DIR)/.alpine-release
 	@touch $@
