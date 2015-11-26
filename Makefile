@@ -332,7 +332,7 @@ $(ISO): $(ISOFS_DIRSTAMP)
 		-quiet			\
 		-follow-links		\
 		$(ISO_OPTS)		\
-		$(ISO_DIR)
+		$(ISO_DIR) && isohybrid $(ISO)
 	@ln -fs $@ $(ISO_LINK)
 
 isofs: $(ISOFS_DIRSTAMP)
