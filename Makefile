@@ -521,7 +521,7 @@ all-release: current $(addsuffix .conf.mk, $(profiles))
 			PROFILE=$$i release || break; \
 	done
 
-edge desktop mini xen vanilla rpi uboot: current
+edge desktop extended xen vanilla rpi uboot: current
 	@fakeroot $(MAKE) ALPINE_RELEASE=$(current) PROFILE=alpine-$@ sha1
 
 .PRECIOUS: $(MODLOOP_KERNELSTAMP) $(MODLOOP_DIRSTAMP) $(INITFS_DIRSTAMP) $(INITFS) $(ISO_KERNEL_STAMP)
