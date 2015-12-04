@@ -256,7 +256,7 @@ else
 	@for flavor in $(KERNEL_FLAVOR); do \
 		echo "label $$flavor"; \
 		echo "	kernel /boot/$(call VMLINUZ_NAME,$$flavor)";\
-		echo "	append initrd=/boot/initramfs-$$flavor modloop-$$flavor modules=loop,squashfs,sd-mod,usb-storage quiet $(BOOT_OPTS)"; \
+		echo "	append initrd=/boot/initramfs-$$flavor modloop=/boot/modloop-$$flavor modules=loop,squashfs,sd-mod,usb-storage quiet $(BOOT_OPTS)"; \
 	done >>$@
 endif
 
