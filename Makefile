@@ -416,7 +416,7 @@ else ifeq ($(ALPINE_NAME),alpine-rpi)
 #
 RPI_TAR_GZ      ?= $(ALPINE_NAME)-$(ALPINE_RELEASE)-$(ALPINE_ARCH).rpi.tar.gz
 
-RPI_FW_COMMIT	:= b06b317afb60547b436cd30e056b54cec7ae3b8e
+RPI_FW_COMMIT	:= 1efc1ece0d1e282b1cf4f371d2f7c4098113c098
 RPI_URL		:= https://raw.githubusercontent.com/raspberrypi/firmware/$(RPI_FW_COMMIT)/boot/
 RPI_BOOT_FILES	:= bootcode.bin fixup.dat start.elf
 RPI_TEMP	:= $(DESTDIR)/tmp.rpi
