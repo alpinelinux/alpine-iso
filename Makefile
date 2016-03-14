@@ -437,11 +437,12 @@ $(RPI_TAR_GZ): $(ALL_MODLOOP) $(ALL_INITFS) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTA
 		cp $(ISO_DIR)/boot/vmlinuz-$$flavor $(RPI_TEMP)/boot/ ; \
 		cp $(subst %,$$flavor,$(INITFS)) $(RPI_TEMP)/boot ; \
 		cp $(subst %,$$flavor,$(MODLOOP)) $(RPI_TEMP)/boot/ ; \
-		echo "BOOT_IMAGE=/boot/vmlinuz-$$flavor modules=loop,squashfs,sd-mod,usb-storage modloop=/boot/modloop-$$flavor quiet $(BOOT_OPTS)" > $(RPI_TEMP)/cmdline-$$flavor.txt ; \
 	done
+	echo -en "modules=loop,squashfs,sd-mod,usb-storage quiet $(BOOT_OPTS)" > $(RPI_TEMP)/cmdline.txt
 	echo -en "disable_splash=1\nboot_delay=0\n" > $(RPI_TEMP)/config.txt
-	echo -en "[pi1]\ncmdline=cmdline-rpi.txt\nkernel=boot/vmlinuz-rpi\ninitramfs boot/initramfs-rpi 0x08000000\n" >> $(RPI_TEMP)/config.txt
-	echo -en "[pi2]\ncmdline=cmdline-rpi2.txt\nkernel=boot/vmlinuz-rpi2\ninitramfs boot/initramfs-rpi2 0x08000000\n" >> $(RPI_TEMP)/config.txt
+	echo -en "[pi1]\nkernel=boot/vmlinuz-rpi\ninitramfs boot/initramfs-rpi 0x08000000\n" >> $(RPI_TEMP)/config.txt
+	echo -en "[pi2]\nkernel=boot/vmlinuz-rpi2\ninitramfs boot/initramfs-rpi2 0x08000000\n" >> $(RPI_TEMP)/config.txt
+	echo -en "[pi3]\nkernel=boot/vmlinuz-rpi2\ninitramfs boot/initramfs-rpi2 0x08000000\n" >> $(RPI_TEMP)/config.txt
 	echo -en "[all]\n" >> $(RPI_TEMP)/config.txt
 	echo -en "include usercfg.txt\n" >> $(RPI_TEMP)/config.txt
 	cp -r $(ISO_DIR)/apks $(RPI_TEMP)/
