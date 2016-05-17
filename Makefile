@@ -497,7 +497,7 @@ else
 ifeq ($(ALPINE_ARCH),x86_64)
 profiles ?= alpine alpine-extended alpine-vanilla alpine-xen
 else
-profiles ?= alpine alpine-extended alpine-vanilla
+profiles ?= alpine alpine-extended alpine-vanilla alpine-virt
 endif
 endif
 
@@ -521,7 +521,7 @@ all-release: current $(addsuffix .conf.mk, $(profiles))
 			PROFILE=$$i release || break; \
 	done
 
-edge desktop extended xen vanilla rpi uboot: current
+edge desktop extended xen vanilla rpi uboot virt: current
 	@fakeroot $(MAKE) ALPINE_RELEASE=$(current) PROFILE=alpine-$@ sha1
 
 .PRECIOUS: $(MODLOOP_KERNELSTAMP) $(MODLOOP_DIRSTAMP) $(INITFS_DIRSTAMP) $(INITFS) $(ISO_KERNEL_STAMP)
