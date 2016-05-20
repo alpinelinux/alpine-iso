@@ -440,9 +440,11 @@ $(RPI_TAR_GZ): $(ALL_MODLOOP) $(ALL_INITFS) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTA
 	done
 	echo -en "modules=loop,squashfs,sd-mod,usb-storage quiet $(BOOT_OPTS)" > $(RPI_TEMP)/cmdline.txt
 	echo -en "disable_splash=1\nboot_delay=0\n" > $(RPI_TEMP)/config.txt
-	echo -en "[pi1]\ngpu_mem_256=64\ngpu_mem_512=256\nkernel=boot/vmlinuz-rpi\ninitramfs boot/initramfs-rpi 0x08000000\n" >> $(RPI_TEMP)/config.txt
-	echo -en "[pi2]\ngpu_mem=256\nkernel=boot/vmlinuz-rpi2\ninitramfs boot/initramfs-rpi2 0x08000000\n" >> $(RPI_TEMP)/config.txt
-	echo -en "[pi3]\ngpu_mem=256\nkernel=boot/vmlinuz-rpi2\ninitramfs boot/initramfs-rpi2 0x08000000\n" >> $(RPI_TEMP)/config.txt
+	echo -en "gpu_mem=256\ngpu_mem_256=64\n" > $(RPI_TEMP)/config.txt
+	echo -en "[pi0]\nkernel=boot/vmlinuz-rpi\ninitramfs boot/initramfs-rpi 0x08000000\n" >> $(RPI_TEMP)/config.txt
+	echo -en "[pi1]\nkernel=boot/vmlinuz-rpi\ninitramfs boot/initramfs-rpi 0x08000000\n" >> $(RPI_TEMP)/config.txt
+	echo -en "[pi2]\nkernel=boot/vmlinuz-rpi2\ninitramfs boot/initramfs-rpi2 0x08000000\n" >> $(RPI_TEMP)/config.txt
+	echo -en "[pi3]\nkernel=boot/vmlinuz-rpi2\ninitramfs boot/initramfs-rpi2 0x08000000\n" >> $(RPI_TEMP)/config.txt
 	echo -en "[all]\n" >> $(RPI_TEMP)/config.txt
 	echo -en "include usercfg.txt\n" >> $(RPI_TEMP)/config.txt
 	cp -r $(ISO_DIR)/apks $(RPI_TEMP)/
