@@ -449,7 +449,11 @@ $(RPI_TAR_GZ): $(ALL_MODLOOP) $(ALL_INITFS) $(ALL_ISO_KERNEL) $(ISO_REPOS_DIRSTA
 	echo -en "include usercfg.txt\n" >> $(RPI_TEMP)/config.txt
 	cp -r $(ISO_DIR)/apks $(RPI_TEMP)/
 	cp -a $(DESTDIR)/modloop.*/tmp/usr/lib/linux-*-rpi*/*.dtb $(RPI_TEMP)/
-	cp -a $(DESTDIR)/modloop.*/tmp/usr/lib/linux-*-rpi*/overlays $(RPI_TEMP)/
+	for i in $(DESTDIR)/modloop.*/tmp/usr/lib/linux-*-rpi*/overlays; do \
+		if [ -e "$$i" ]; then \
+			cp -a "$$i" $(RPI_TEMP)/; \
+		fi; \
+	done
 	tar czf $(RPI_TAR_GZ) -C "$(RPI_TEMP)" .
 
 release_targets := $(RPI_TAR_GZ)
