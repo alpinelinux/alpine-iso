@@ -497,7 +497,7 @@ ifeq ($(ALPINE_ARCH),armhf)
 profiles ?= alpine-rpi alpine-uboot
 else
 ifeq ($(ALPINE_ARCH),x86_64)
-profiles ?= alpine alpine-extended alpine-vanilla alpine-xen
+profiles ?= alpine alpine-extended alpine-vanilla alpine-virt alpine-xen
 else
 profiles ?= alpine alpine-extended alpine-vanilla alpine-virt
 endif
