@@ -330,6 +330,7 @@ $(ISO): $(ISOFS_DIRSTAMP)
 		-boot-info-table	\
 		-quiet			\
 		-follow-links		\
+		-V "$(ALPINE_NAME) $(ALPINE_RELEASE) $(ALPINE_ARCH)" \
 		$(ISO_OPTS)		\
 		$(ISO_DIR) && isohybrid $(ISO)
 	@ln -fs $@ $(ISO_LINK)
