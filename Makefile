@@ -14,6 +14,7 @@ DESTDIR		?= $(shell pwd)/isotmp.$(PROFILE)
 MKSQUASHFS	= mksquashfs
 SUDO		= sudo
 TAR		= busybox tar
+GENISO		= xorrisofs
 APK_SEARCH	= apk search --exact
 
 ISO		?= $(ALPINE_NAME)-$(ALPINE_RELEASE)-$(ALPINE_ARCH).iso
@@ -322,7 +323,7 @@ $(ISOFS_DIRSTAMP): $(ALL_MODLOOP) $(ALL_INITFS) $(ISO_REPOS_DIRSTAMP) $(ISOLINUX
 
 $(ISO): $(ISOFS_DIRSTAMP)
 	@echo "==> iso: building $(notdir $(ISO))"
-	@genisoimage -o $(ISO) -l -J -R \
+	@$(GENISO) -o $(ISO) -l -J -R \
 		-b $(ISOLINUX_DIR)/isolinux.bin \
 		-c $(ISOLINUX_DIR)/boot.cat	\
 		-no-emul-boot		\
